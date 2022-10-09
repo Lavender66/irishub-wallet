@@ -1,0 +1,48 @@
+{
+    "manifest_version": 3,
+    "name": "iris-wallet",
+    "description": "iris-hub",
+    "version": "0.0.1",
+    "background": {
+        "service_worker": "/background.js"
+    },
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "icons": {
+        "16": "assets/icons/16.ico",
+        "32": "assets/icons/32.ico",
+        "48": "assets/icons/48.ico",
+        "128": "assets/icons/128.ico"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "/content.js"
+            ]
+        }
+    ],
+    "options_page": "options.html",
+    "sandbox": {
+        "pages": ["sandbox.html"]
+    },
+    "permissions": [
+        "activeTab",
+        "scripting",
+        "storage"
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "sandbox.js"
+            ],
+            "matches": [
+                "http://*/*",
+                "https://*/*"
+            ]
+        }
+    ]
+}
