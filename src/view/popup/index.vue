@@ -14,7 +14,7 @@ html, body {
   justify-content: center;
 }
 #app{
-  width: 395px;
-  height: 413px;
+  width: 360px;
+  height: 580px;
 }
 </style>

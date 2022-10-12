@@ -1,6 +1,6 @@
-import * as iris from "@irisnet/irishub-sdk";
-import types from "@irisnet/irishub-sdk/dist/src/types"
+import types from "chrome-v3-irishub/dist/src/types"
 import { CHAIN_CONFIG } from "@/constant";
+import * as iris from "chrome-v3-irishub"
 export const Consts = {
 	timeout: 10000,
 };
@@ -42,6 +42,17 @@ const BaseClient = {
 };
 export const client = BaseClient.getClient();
 export const sdk = iris
+
+// 新增一个账户名字和密码
+export const keyAddFunc = (name: string, password: string) => {
+	const wallet = client.keys.add(name, password)
+    const decryptMnemonic = client.config.keyDAO.decrypt(wallet.mnemonic, password)
+    const walletInfo = {
+      wallet,
+      decryptMnemonic
+    }
+	return walletInfo
+}
 
 // let address =  client.keys.recover('test','1234567890','machine style fan middle olympic affair scene update history lunar cinnamon fat escape slab alley ozone dad cool goose room kite banner unveil consider')
 // const address = client.keys.recover(

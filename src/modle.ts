@@ -1,4 +1,4 @@
 declare module "@irisnet/irishub-sdk"
-declare module "@cosmostation/cosmosjs"
+declare module "chrome-v3-irishub"
 declare module "@/constant"
-declare module "lodash"
+declare module "crypto-js"

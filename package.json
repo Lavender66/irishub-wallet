@@ -14,6 +14,7 @@
     "@types/chrome": "^0.0.197",
     "ant-design-vue": "^3.2.12",
     "core-js": "^3.8.3",
+    "crypto-js": "^4.1.1",
     "lodash": "^4.17.21",
     "node-fetch": "^2.6.1",
     "node-polyfill-webpack-plugin": "^2.0.1",

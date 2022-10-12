@@ -1,8 +1,23 @@
 <template>
   <div class="home">
-    <a-button type="primary" @click="toAccount">
-      + Add Account
-    </a-button>
+    <!-- header -->
+    <a-menu v-model:selectedKeys="current" mode="horizontal" class="home-menu">
+      <a-menu-item key="setting">
+        <template #icon>
+          <menu-outlined />
+        </template>
+      </a-menu-item>
+      <a-menu-item key="home">
+        <template #icon>
+          <bank-outlined />
+        </template>
+      </a-menu-item>
+      <a-menu-item key="user">
+        <template #icon>
+          <user-outlined />
+        </template>
+      </a-menu-item>
+    </a-menu>
     <!-- <router-link to="/account">Home</router-link>
     <button @click="test">dianji</button>
     <div v-show="!show">
@@ -18,17 +33,31 @@
       address: <p>{{address}}</p>
       <a-textarea v-model:value="address" />
     </div> -->
-    <iframe :src="iframeSrc" ref="iframeRef" id="iframeRef" style="display: none;"></iframe>
+    <AccountView v-if="current && current[0] === 'user'" />
+    <SettingView v-if="current && current[0] === 'setting'" />
+    <div v-if="current && current[0] === 'home'">
+      <p>name</p>
+      <p>address</p>
+      <p>token</p>
+      <a-button>Send</a-button>
+    </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-// import lodash from 'lodash'
-import { onMounted, ref } from "vue";
+import { ref } from "vue";
+import { MenuOutlined, UserOutlined, BankOutlined} from '@ant-design/icons-vue';
+import AccountView from "./components/AccountView.vue"
+import SettingView from "./components/SettingView.vue"
+import CryptoJS from "crypto-js";
 // import { client } from "../../helper/sdkHelper"
-import * as cosmos from "@cosmostation/cosmosjs";
-// console.log('======iris', client)
-console.log('======cosmos', cosmos)
+import * as iris from "chrome-v3-irishub"
+console.log('======iris', iris)
+
+
+console.log('======CryptoJS', CryptoJS)
+// 当前在的导航页
+const current = ref<string[]>(['user']);
 
 const show = ref<boolean>(false)
 const name = ref<string>('name')
@@ -36,48 +65,10 @@ const password = ref<string>('password')
 const mnemonic = ref<string>()
 const address = ref<string>()
 
-// 添加一个账户
-const toAccount = () => {
-  chrome.tabs.create({
-    url: 'popup.html#/account',
-  })
-}
 
-// import * as iris from "@irisnet/irishub-sdk";
-// console.log('====', iris)
-let iframeSrc = ref<string>("sandbox.html");
-let iframeRef = ref<any>(null);   // 和iframe标签的ref绑定
-let iframeWindow: any = null;   //iframe的window对象
+// onMounted(() => {
+// });
 
-onMounted(() => {
-  // 父项目绑定一个message事件给iframe handleMessage：接收iframe传到父项目的值
-  // window.addEventListener("message", handleMessage); // 监听iframe的事件
-  //vue3使用ref定义的变量需要使用.value获取值， vue2直接iframeRef.contentWindow
-  iframeWindow = iframeRef.value.contentWindow;
-  // sendMessage();
-});
-// const handleMessage = (event: string) => {
-//   console.log(event.data);
-// };
-// 向iframe传参
-const sendMessage = () => {
-  if (iframeRef.value.attachEvent) {
-    // 兼容IE浏览器判断 ie的window.onload 是隐藏的 需要用attachEvent注册
-    iframeRef.value.attachEvent("onload", function () {
-      //postMessage（message,origin） 向iframe发送参数
-      //message：iframe接收的参数，最好字符串   origin：其值可以是字符串"*"（表示无限制）或者一个url
-      iframeWindow.postMessage("token", iframeSrc);
-    });
-  } else {
-    iframeRef.value.onload = function () {
-      iframeWindow.postMessage("token", iframeSrc);
-    };
-  }
-};
-
-const test = () => {
-  sendMessage();
-}
 
 // Export keystore of a key
 // const keystore = client.keys.export(name.value, password, password);
@@ -102,9 +93,9 @@ function regiest() {
 </script>
 <style lang="scss">
 .home {
-  width: 200px;
-  // display: flex;
-  // align-items: center;
-  // justify-content: center;
+  .home-menu {
+    display: flex;
+    justify-content: space-around;
+  }
 }
 </style>

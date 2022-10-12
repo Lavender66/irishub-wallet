@@ -27,7 +27,7 @@
     ],
     "options_page": "options.html",
     "sandbox": {
-        "pages": ["sandbox.html"]
+        "pages": []
     },
     "permissions": [
         "activeTab",
@@ -37,7 +37,6 @@
     "web_accessible_resources": [
         {
             "resources": [
-                "sandbox.js"
             ],
             "matches": [
                 "http://*/*",
