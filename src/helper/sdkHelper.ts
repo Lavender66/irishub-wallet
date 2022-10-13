@@ -54,6 +54,17 @@ export const keyAddFunc = (name: string, password: string) => {
 	return walletInfo
 }
 
+//得到助记词
+export const keyMnemonic = (mnemonic: string, password: string) => {
+	return client.config.keyDAO.decrypt(mnemonic, password)
+}
+
+// 恢复
+export const keyRecover = (name: string, password: string, mnemonic: string) => {
+	return client.config.keys.recover(name, password, mnemonic)
+}
+// 
+
 // let address =  client.keys.recover('test','1234567890','machine style fan middle olympic affair scene update history lunar cinnamon fat escape slab alley ozone dad cool goose room kite banner unveil consider')
 // const address = client.keys.recover(
 // 	"1",

@@ -1,12 +1,13 @@
-import CryptoJS from "crypto-js";
+import * as AES from 'crypto-js/aes';
+import * as ENC from 'crypto-js/enc-utf8';
 
 
 export const aesEncrypt = (password: string) => {
     // 调用crypto-js中的aes加密
-    return CryptoJS.AES.encrypt(password, password).toString()
+    return AES.encrypt(password, password).toString()
 }
 
-export const aesDecrypt = (password: string) => {
+export const aesDecrypt = (decrypt: string, password: string) => {
     // 调用crypto-js中的aes解密
-    return CryptoJS.AES.decrypt(password, password).toString()
+    return AES.decrypt(decrypt, password).toString(ENC)
 }
