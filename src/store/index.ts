@@ -1,9 +1,12 @@
-import { createStore } from "vuex";
+import { defineStore } from "pinia"
+export const useWalletStore = defineStore("wallet", {
+  state: () => {
+    return {
+      password: "",
+      encryptedPassword: ""
+    }
+  },
+  getters:{},
+  actions:{}
+})
 
-export default createStore({
-  state: {},
-  getters: {},
-  mutations: {},
-  actions: {},
-  modules: {},
-});

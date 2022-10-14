@@ -47,7 +47,7 @@ import { EllipsisOutlined, KeyOutlined, LeftOutlined } from '@ant-design/icons-v
 import type { MenuProps } from 'ant-design-vue';
 import { getValue } from "../../../helper/storageService"
 import { aesEncrypt, aesDecrypt } from "../../../helper/aes"
-import { keyMnemonic } from "../../../helper/sdkHelper"
+import { keyMnemonicFunc } from "../../../helper/sdkHelper"
 
 const step = ref<string>("first");
 const unLockPas = ref<string>('')
@@ -115,7 +115,7 @@ const confirmPasFunc = async () => {
     const res = aesDecrypt(mac, unLockPas.value)
     if (res === unLockPas.value) {
       step.value = 'third'
-      curViewMnemonic.mnemonic = keyMnemonic(curViewMnemonic.enMnemonic, unLockPas.value)
+      curViewMnemonic.mnemonic = keyMnemonicFunc(curViewMnemonic.enMnemonic, unLockPas.value)
     }
   }
 }

@@ -19,6 +19,7 @@
     "node-fetch": "^2.6.1",
     "node-polyfill-webpack-plugin": "^2.0.1",
     "nprogress": "^0.2.0",
+    "pinia": "^2.0.23",
     "vue": "^3.2.13",
     "vue-class-component": "^8.0.0-0",
     "vue-router": "^4.0.3",

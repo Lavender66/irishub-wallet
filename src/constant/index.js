@@ -1,12 +1,13 @@
+// 配置成keplr中的同链信息
 export const CHAIN_CONFIG = {
-  chainId: 'irishub-qa',
-  node: 'http://192.168.0.129:26657',
+  chainId: 'nyancat-9',
+  node: 'https://rpc.nyancat.rainbow.one',
   fee: {
-    denom: 'uiris',
-    amount: '200000'
+    denom: 'unyan',
+    amount: '800000'
   },
-  gas: '200000',
+  gas: '400000',
   network: 0,
-  explorer: 'http://192.168.0.115:18011/#/',
+  explorer: 'https://nyancat.iobscan.io/#/',
   baseUnit: 6
 }
