@@ -1,6 +1,7 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
 import HomeView from "../view/popup/HomeView.vue";
-
+import SendView from "../view/popup/SendView.vue";
+import SignView from "../view/popup/SignView.vue";
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
@@ -15,6 +16,16 @@ const routes: Array<RouteRecordRaw> = [
     // which is lazy-loaded when the route is visited.
     component: () =>
       import(/* webpackChunkName: "account" */ "../view/popup/RegiestView.vue"),
+  },
+  {
+    path: "/send",
+    name: "send",
+    component: SendView,
+  },
+  {
+    path: "/sign",
+    name: "sign",
+    component: SignView,
   },
 ];
 

@@ -22,10 +22,10 @@
             ],
             "js": [
                 "/content.js"
-            ]
+            ],
+            "run_at": "document_start"
         }
     ],
-    "options_page": "options.html",
     "sandbox": {
         "pages": []
     },
@@ -36,7 +36,7 @@
     ],
     "web_accessible_resources": [
         {
-            "resources": [
+            "resources": ["injected.js"
             ],
             "matches": [
                 "http://*/*",

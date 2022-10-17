@@ -43,16 +43,6 @@
           <p style="font-weight: 800;">{{ account.amount }} NYAN</p>
           <a-button style="width: 120px; margin-top: 10px;" type="primary" @click="sendTx">Send</a-button>
         </div>
-        <div class="tx-detail" v-if="tokenShow === 'second'">
-          <left-outlined @click="()=> {tokenShow = 'first'}" />
-          <p>Recipient Address</p>
-          <a-input v-model:value="txMsg.toAddress"></a-input>
-          <p>Amount</p>
-          <a-input v-model:value="txMsg.amount"></a-input>
-          <p>Fee</p>
-          <p>80000</p>
-          <a-button style="width: 100%; margin-top: 10px;" type="primary" @click="sendTxDetail">Send</a-button>
-        </div>
         <div class="noEmpty-account" v-if="tokenShow === 'third'">
           <left-outlined @click="()=> {tokenShow = 'second'}" />
         </div>
@@ -63,14 +53,14 @@
 
 <script lang="ts" setup>
 import { onMounted, ref, reactive } from "vue";
-import { MenuOutlined, UserOutlined, BankOutlined, LockOutlined, LeftOutlined } from '@ant-design/icons-vue';
+import { MenuOutlined, UserOutlined, BankOutlined, LockOutlined, LeftOutlined, SelectOutlined } from '@ant-design/icons-vue';
 import AccountView from "./components/AccountView.vue"
 import SettingView from "./components/SettingView.vue"
-import { sdk, keyRecoverFunc, keyMnemonicFunc, sendTxOnline, queryBankBalance, sdkType, client } from "../../helper/sdkHelper"
+import { keyRecoverFunc, keyMnemonicFunc, queryBankBalance } from "../../helper/sdkHelper"
 import { getValue, saveValue } from "../../helper/storageService"
 import { aesDecrypt } from "../../helper/aes"
-import { CHAIN_CONFIG } from "@/constant";
-console.log('======iris', sdk)
+import { useRouter } from 'vue-router'
+const router = useRouter()
 // 当前在的导航页
 const current = ref<string[]>(['home']);
 const accountEmpty = ref<string>('empty')
@@ -163,47 +153,16 @@ const unlockWallet = () => {
 
 const sendTx = () => {
   // 发送一笔交易
-  tokenShow.value = 'second'
+  // tokenShow.value = 'second'
+  router.push({ path: '/send' })
+  // 命名的路由
+  // router.push({ name: 'user', params: { userId: '123' }})
+
+  // 带查询参数，变成 /register?userId=123
+  //  router.push({ path: 'register', query: { userId: '123' }})
+
 }
 
-const sendTxDetail = async () => {
-  const baseTx = {
-    from: 'name',
-    password: 'p',
-    mode: 2,
-    account_number: 1397,
-    sequence: 0,
-    chainId: client.config.chainId
-  }
-  const amount: any[] = [
-    {
-      denom: 'unyan',
-      amount: '1000',
-    },
-  ];
-  const msgs: any[] = [
-    {
-      type: "cosmos.bank.v1beta1.MsgSend",
-      value: {
-        from_address: 'iaa1g2tq9kacgj2tljrgku8mampz7c3l9xy6pxv6cc',
-        to_address: 'iaa1weasw2y67p9nss6mhx5hftedp4zyzg72eu3wwn',
-        amount
-      }
-    }
-  ];
-  // watch wallet
-  const unsignedStdTx = client.tx.buildTx(msgs, baseTx);
-  const unsignedTxStr = Buffer.from(unsignedStdTx.getData()).toString('base64');
-  // cold wallet
-  const recover_unsigned_std_tx = client.tx.newStdTxFromTxData(unsignedTxStr);
-  const recover_signed_std_tx = await client.tx.sign(recover_unsigned_std_tx, baseTx, true);
-  const recover_signed_std_tx_str = Buffer.from(recover_signed_std_tx.getData()).toString('base64');
-  // watch wallet
-  const signed_std_tx = client.tx.newStdTxFromTxData(recover_signed_std_tx_str);
-  await client.tx.broadcast(signed_std_tx, baseTx.mode).then((res: any) => {
-    console.log('=======tsres', res)
-  })
-}
 
 </script>
 <style lang="scss">
@@ -240,10 +199,6 @@ const sendTxDetail = async () => {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-  }
-
-  .tx-detail {
-    margin: 0px 20px 20px 20px;
   }
 }
 </style>

@@ -35,6 +35,18 @@ module.exports = {
       {
         patterns: [
           {
+            from: path.resolve("src/background.js"),
+            to: `${path.resolve("dist")}/background.js`,
+          },
+          {
+            from: path.resolve("src/content.js"),
+            to: `${path.resolve("dist")}/content.js`,
+          },
+          {
+            from: path.resolve("src/injected.js"),
+            to: `${path.resolve("dist")}/injected.js`,
+          },
+          {
             from: path.resolve(`src/manifest.${process.env.NODE_ENV}.json`),
             to: `${path.resolve("dist")}/manifest.json`,
           },

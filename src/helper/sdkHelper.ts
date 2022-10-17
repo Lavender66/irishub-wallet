@@ -142,5 +142,4 @@ export async function sendTxOnline(to: string, amount1: string) {
 }
 
 export const client = BaseClient.getClient();
-export const sdk = iris
 export const sdkType = types
