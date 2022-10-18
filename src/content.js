@@ -5,21 +5,21 @@ scriptElement.src = chrome.runtime.getURL('injected.js');
 scriptElement.type = 'text/javascript';
 container.insertBefore(scriptElement, container.children[0]);
 scriptElement.remove();
-// chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-//     if (msg.type == 'emit keplr_keystorechange') {
-//         window.dispatchEvent(new Event('keplr_keystorechange'));
-//     }
-// });
-window.addEventListener('message', (e)=> {
+window.addEventListener('message', (e) => {
     const message = e.data;
+    // 监听离线签名的请求
     if (!message || message.type !== 'sign-request') {
         return;
     }
-    const result = chrome.runtime.sendMessage({ type: 'offline sign request' });
-    console.log('======result', result)
+    // 这里的结果要返回去
     const request = {
         type: 'sign-request-response',
-        // data: result
+        data: {}
     };
+    // 这里需要得到签名结果
+    chrome.runtime.sendMessage({ type: 'offline sign request', data: message.data }, (res) => {
+        console.log('======content respnse', res)
+    });
+    console.log('======sign-request ', message)
     window.postMessage(request, e.source);
 });

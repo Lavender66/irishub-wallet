@@ -1,9 +1,13 @@
 "use strict";
 console.log('========inject irishub')
 const irisWallet = {
-    signRequest() {
+    signRequest(unsigntx, basetx) {
         const signMessage = {
-            type: "sign-request"
+            type: "sign-request",
+            data: {
+                unsigntx,
+                basetx
+            },
         };
         return new Promise((resolve, reject) => {
             const receiveResponse = (e) => {
@@ -17,7 +21,6 @@ const irisWallet = {
                     return;
                 }
                 resolve(response);
-                console.log('======inject', response)
             };
             window.addEventListener("message", receiveResponse);
             window.postMessage(signMessage, window.location.origin);

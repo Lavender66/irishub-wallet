@@ -14,7 +14,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from "vue";
+import { ref, onMounted, reactive } from "vue";
 import { LeftOutlined } from '@ant-design/icons-vue';
 import { client } from "../../helper/sdkHelper"
 import { keyRecoverFunc, keyMnemonicFunc, queryBankBalance } from "../../helper/sdkHelper"
@@ -23,50 +23,76 @@ import { useRoute } from 'vue-router'
 const route = useRoute()
 const hash = ref<string>('')
 const description = ref<string>('')
-console.log('======client', client, route.query)
+const signRequest = reactive<{
+  unsigntx: object,
+  basetx: object
+}>({
+  unsigntx: {},
+  basetx: {}
+})
 const sendTxReject = () => {
   console.log('======reject')
 }
 
+onMounted(() => {
+  chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+    if (request.type == "service worker sign") {
+      signRequest.unsigntx = request.unsigntx
+      signRequest.basetx = request.basetx
+    }
+    return true
+  });
+})
+
 // 钱包内的交易
 const sendTxApprove = async () => {
+  // 如果是第三方来请求签名
+  if (route.query.other === 'true') {
+    // client.keys.recover('name', 'p', 'decrease unfair barely brick brief tennis concert prison next armor steel regular ill van proud present defense visual random pond unlock struggle naive stick')
+    // const signed_std_tx = await client.tx.sign(signRequest.unsigntx, signRequest.basetx);
+    chrome.runtime.sendMessage({
+      type: 'sign approved',
+      data: 'test clinet connect',
+    });
+    // window.close();
+  }
   // 如果是windows窗口
-  if (route.query.detached === 'true') {
-    const { curKey } = await getValue('curKey') as any
-    const { mac } = await getValue('mac') as any
-    keyRecoverFunc(curKey.name, 'p', keyMnemonicFunc(curKey.mnemonic, 'p'))
-  }
-  const baseTx = {
-    from: 'name',
-    password: 'p',
-    mode: 2,
-    chainId: client.config.chainId
-  }
-  const amount: any[] = [
-    {
-      denom: 'unyan',
-      amount: route.query.amount,
-    },
-  ];
-  const msgs: any[] = [
-    {
-      type: "cosmos.bank.v1beta1.MsgSend",
-      value: {
-        from_address: 'iaa1g2tq9kacgj2tljrgku8mampz7c3l9xy6pxv6cc',
-        to_address: route.query.toAddress,
-        amount
-      }
-    }
-  ];
-  // watch wallet
-  const unsignedStdTx = client.tx.buildTx(msgs, baseTx);
-  const signed_std_tx = await client.tx.sign(unsignedStdTx, baseTx);
-  await client.tx.broadcast(signed_std_tx, baseTx.mode).then((res: any) => {
-    hash.value = res.hash
-    console.log('=======tsres', res)
-  }).catch((error: any) => {
-    console.log('====error', error)
-  })
+  // if (route.query.detached === 'true') {
+  //   const { curKey } = await getValue('curKey') as any
+  //   const { mac } = await getValue('mac') as any
+  //   keyRecoverFunc(curKey.name, 'p', keyMnemonicFunc(curKey.mnemonic, 'p'))
+  // }
+  // const baseTx = {
+  //   from: 'name',
+  //   password: 'p',
+  //   mode: 2,
+  //   chainId: client.config.chainId
+  // }
+  // const amount: any[] = [
+  //   {
+  //     denom: 'unyan',
+  //     amount: route.query.amount,
+  //   },
+  // ];
+  // const msgs: any[] = [
+  //   {
+  //     type: "cosmos.bank.v1beta1.MsgSend",
+  //     value: {
+  //       from_address: 'iaa1g2tq9kacgj2tljrgku8mampz7c3l9xy6pxv6cc',
+  //       to_address: route.query.toAddress,
+  //       amount
+  //     }
+  //   }
+  // ];
+  // // watch wallet
+  // const unsignedStdTx = client.tx.buildTx(msgs, baseTx);
+  // const signed_std_tx = await client.tx.sign(unsignedStdTx, baseTx);
+  // await client.tx.broadcast(signed_std_tx, baseTx.mode).then((res: any) => {
+  //   hash.value = res.hash
+  //   console.log('=======tsres', res)
+  // }).catch((error: any) => {
+  //   console.log('====error', error)
+  // })
 }
 
 // 窗口内的交易
