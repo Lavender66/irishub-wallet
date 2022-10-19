@@ -10,7 +10,7 @@ class SignService {
                 url: chrome.runtime.getURL(`/popup.html#/sign?other=true`),
                 type: 'popup',
                 top: 80,
-            }).then(async (res) => {
+            }).then(res => {
                 const tabId = res.tabs[0].id;
                 // complete 会触发两次
                 chrome.tabs.onUpdated.addListener((_tabId, changeInfo, tab) => {
@@ -43,26 +43,23 @@ class SignService {
 }
 const signService = new SignService();
 
-chrome.runtime.onMessage.addListener(async (msg, sender, sendResponse) => {
-    // if (msg.type === 'offline sign request') {
-    //     offlineSignRequest(msg).then(res => {
-    //         console.log('======approve', res)
-    //         sendResponse(res)
-    //     })
-    //     return true;
-    // }
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    console.log('======back', msg, sender)
     if (msg.type === 'offline sign request') {
-        (async () => {
-            var key = await signService.wait(msg)
-            console.log('======approve', res)
-            sendResponse(key);
-        })();
+        offlineSignRequest(msg).then(res => {
+            sendResponse(res)
+        })
         return true;
     }
     if (msg.type === 'sign approved') {
         signService.approve(sender.tab?.id, msg.data)
+        console.log('========sender', sender)
+        chrome.windows.remove(sender.tab?.windowId).then(res => {
+            console.log('======chrome.runtime.lastError', res, chrome.runtime.lastError)
+        })
+        sendResponse()
+        return true
     }
-    return true;
 });
 
 const offlineSignRequest = async (msg) => {

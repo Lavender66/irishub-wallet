@@ -11,15 +11,13 @@ window.addEventListener('message', (e) => {
     if (!message || message.type !== 'sign-request') {
         return;
     }
-    // 这里的结果要返回去
-    const request = {
-        type: 'sign-request-response',
-        data: {}
-    };
     // 这里需要得到签名结果
-    chrome.runtime.sendMessage({ type: 'offline sign request', data: message.data }, (res) => {
-        console.log('======content respnse', res)
+    chrome.runtime.sendMessage({ type: 'offline sign request', data: message.data }, res => {
+        // 这里的结果要返回去
+        const request = {
+            type: 'sign-request-response',
+            data: res
+        };
+        window.postMessage(request, e.source);
     });
-    console.log('======sign-request ', message)
-    window.postMessage(request, e.source);
 });

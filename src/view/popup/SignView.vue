@@ -1,6 +1,6 @@
 <template>
   <div class="tx-detail">
-    <div style="display:flex;justify-content:space-between;margin-top: 10px;">
+    <div v-if="!$route.query.other" style="display:flex;justify-content:space-between;margin-top: 10px;">
       <left-outlined style="font-size: 20px;" @click="()=> {$router.push({path: '/'})}" />
     </div>
     <p>Data</p>
@@ -35,12 +35,11 @@ const sendTxReject = () => {
 }
 
 onMounted(() => {
-  chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.type == "service worker sign") {
-      signRequest.unsigntx = request.unsigntx
-      signRequest.basetx = request.basetx
+      signRequest.unsigntx = request.data.unsigntx
+      signRequest.basetx = request.data.basetx
     }
-    return true
   });
 })
 
@@ -48,13 +47,14 @@ onMounted(() => {
 const sendTxApprove = async () => {
   // 如果是第三方来请求签名
   if (route.query.other === 'true') {
-    // client.keys.recover('name', 'p', 'decrease unfair barely brick brief tennis concert prison next armor steel regular ill van proud present defense visual random pond unlock struggle naive stick')
-    // const signed_std_tx = await client.tx.sign(signRequest.unsigntx, signRequest.basetx);
+    client.keys.recover('name', 'p', 'decrease unfair barely brick brief tennis concert prison next armor steel regular ill van proud present defense visual random pond unlock struggle naive stick')
+    let recover_unsigned_std_tx = client.tx.newStdTxFromTxData(signRequest.unsigntx);
+    const signed_std_tx = await client.tx.sign(recover_unsigned_std_tx, signRequest.basetx);
+    let recover_signed_std_tx = Buffer.from(signed_std_tx.getData()).toString('base64');
     chrome.runtime.sendMessage({
       type: 'sign approved',
-      data: 'test clinet connect',
-    });
-    // window.close();
+      data: recover_signed_std_tx,
+    }, () => chrome.runtime.lastError);
   }
   // 如果是windows窗口
   // if (route.query.detached === 'true') {

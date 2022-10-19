@@ -26,12 +26,8 @@
             "run_at": "document_start"
         }
     ],
-    "sandbox": {
-        "pages": []
-    },
     "permissions": [
         "activeTab",
-        "scripting",
         "storage",
         "tabs"
     ],
