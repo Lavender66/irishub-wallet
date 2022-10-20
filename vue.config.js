@@ -59,11 +59,11 @@ module.exports = {
     ]);
   },
   configureWebpack: {
-    output: {
-      filename: `[name].js`,
-      chunkFilename: `[name].js`,
-    },
-    devtool: "cheap-module-source-map",
+    // output: {
+    //   filename: `[name].js`,
+    //   chunkFilename: `[name].js`,
+    // },
+    devtool: isDevMode ? 'inline-source-map' : false,
     plugins: [new NodePolyfillPlugin()],
   },
   css: {

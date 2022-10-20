@@ -26,34 +26,28 @@
         </template>
       </a-menu-item>
     </a-menu>
-    <AccountView v-if="current && current[0] === 'user'" />
+    <AccountView v-if="current && current[0] === 'user'" @changeHome="changeToHome" />
     <SettingView v-if="current && current[0] === 'setting'" @lockWallet="lockWallet" />
     <div v-if="current && current[0] === 'home'">
-      <div class="empty-account" v-if="accountEmpty === 'empty'">
-        <a-button type="primary" @click="addAccount">
-          + Add Account
-        </a-button>
+      <!-- <p style="margin-top: 20px">Account Name</p> -->
+      <div class="noEmpty-account" v-if="tokenShow === 'first'">
+        <p style="margin-top: 20px">{{ account.name }}</p>
+        <p>{{ account.address }}</p>
+        <p style="margin-top: 40px">Total Banlance</p>
+        <p style="font-weight: 800;">{{ account.amount }} NYAN</p>
+        <a-button style="width: 120px; margin-top: 10px;" type="primary" @click="sendTx">Send</a-button>
       </div>
-      <div v-if="accountEmpty === 'noEmpty'">
-        <!-- <p style="margin-top: 20px">Account Name</p> -->
-        <div class="noEmpty-account" v-if="tokenShow === 'first'">
-          <p style="margin-top: 20px">{{ account.name }}</p>
-          <p>{{ account.address }}</p>
-          <p style="margin-top: 40px">Total Banlance</p>
-          <p style="font-weight: 800;">{{ account.amount }} NYAN</p>
-          <a-button style="width: 120px; margin-top: 10px;" type="primary" @click="sendTx">Send</a-button>
-        </div>
-        <div class="noEmpty-account" v-if="tokenShow === 'third'">
-          <left-outlined @click="()=> {tokenShow = 'second'}" />
-        </div>
+      <div class="noEmpty-account" v-if="tokenShow === 'third'">
+        <left-outlined @click="()=> {tokenShow = 'second'}" />
       </div>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref, reactive } from "vue";
+import { onMounted, ref, reactive, h } from "vue";
 import { MenuOutlined, UserOutlined, BankOutlined, LockOutlined, LeftOutlined, SelectOutlined } from '@ant-design/icons-vue';
+import { Modal } from 'ant-design-vue';
 import AccountView from "./components/AccountView.vue"
 import SettingView from "./components/SettingView.vue"
 import { keyRecoverFunc, keyMnemonicFunc, queryBankBalance } from "../../helper/sdkHelper"
@@ -63,7 +57,7 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 // 当前在的导航页
 const current = ref<string[]>(['home']);
-const accountEmpty = ref<string>('empty')
+
 const tokenShow = ref<string>('first')
 
 // 交易信息
@@ -76,6 +70,7 @@ const txMsg = reactive<{
 });
 // 当前账户信息
 const account = reactive<{
+  password: string,
   mnemonic: string,
   name: string;
   mac: string;
@@ -84,6 +79,7 @@ const account = reactive<{
   status: string;
   amount: number,
 }>({
+  password: '',
   name: "",
   mac: "",
   type: "",
@@ -111,39 +107,80 @@ const addAccount = () => {
 const curAccountFunc = async () => {
 
   const { curKey } = await getValue('curKey') as any
+  // 判断当前钱包内有没有账户
+  if (!curKey) {
+    addAccount()
+  }
   const { mac } = await getValue('mac') as any
   const { status } = await getValue('status') as any
   if (curKey) {
-    accountEmpty.value = 'noEmpty'
     account.name = curKey.name
     account.type = curKey.type
     account.mnemonic = curKey.mnemonic
     account.mac = mac
     account.status = status
-    const tempWallet = keyRecoverFunc(account.name, 'p', keyMnemonicFunc(curKey.mnemonic, 'p'))
-    account.address = tempWallet.address
-    queryBankBalance(account.address, 'unyan').then(res => {
-      account.amount = Number((Number(res.balance.amount) / 1000000).toFixed(2))
+    chrome.runtime.sendMessage({
+      type: 'get password'
+    }, res => {
+      if (!res) {
+        account.status = 'lock'
+        saveValue({
+          status: 'lock'
+        });
+        return
+      }
+      account.password = res
+      const tempWallet = keyRecoverFunc(account.name, account.password, keyMnemonicFunc(curKey.mnemonic, account.password))
+      account.address = tempWallet.address
+      queryBankBalance(account.address, 'unyan').then(res => {
+        account.amount = Number((Number(res.balance.amount) / 1000000).toFixed(2))
+      })
     })
-    // console.log('=======queryBankBalance', queryBankBalance(account.address, 'unyan'))
-    // console.log('=======queryMainToken', queryMainToken())
   }
 }
 
 const lockWallet = (val: string) => {
-  // 锁定钱包
+  // 锁定钱包,
+  // todo 更新background里的密码为空
   account.status = val
   saveValue({
     status: account.status
   });
 }
 
+const changeToHome = async (val: string) => {
+  current.value = [val]
+  // window.location.reload()
+  const { curKey } = await getValue('curKey') as any
+  account.name = curKey.name
+  account.type = curKey.type
+  account.mnemonic = curKey.mnemonic
+  chrome.runtime.sendMessage({
+    type: 'get password'
+  }, res => {
+    account.password = res
+    const tempWallet = keyRecoverFunc(account.name, account.password, keyMnemonicFunc(curKey.mnemonic, account.password))
+    account.address = tempWallet.address
+    queryBankBalance(account.address, 'unyan').then(res => {
+      account.amount = Number((Number(res.balance.amount) / 1000000).toFixed(2))
+    })
+  })
+}
+
 const unlockWallet = () => {
+  // 将解锁成功的密码更新到background
+  // 如果background里面没有密码，调出解锁页面
   if (unLockPas.value) {
     const res = aesDecrypt(account.mac, unLockPas.value)
     if (res === unLockPas.value) {
-      // 解锁成功
+      // 解锁成功之后将密码加入到background
       account.status = "unlock"
+      // 将密码传给background,存在内存
+      chrome.runtime.sendMessage({
+        type: 'add password',
+        data: unLockPas.value
+      })
+      window.location.reload()
       saveValue({
         status: account.status
       });
@@ -153,14 +190,7 @@ const unlockWallet = () => {
 
 const sendTx = () => {
   // 发送一笔交易
-  // tokenShow.value = 'second'
   router.push({ path: '/send' })
-  // 命名的路由
-  // router.push({ name: 'user', params: { userId: '123' }})
-
-  // 带查询参数，变成 /register?userId=123
-  //  router.push({ path: 'register', query: { userId: '123' }})
-
 }
 
 

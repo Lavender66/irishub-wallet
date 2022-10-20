@@ -35,7 +35,7 @@
         "src/**/*.vue",
         "tests/**/*.ts",
         "tests/**/*.tsx"
-, "src/entry/background.js", "src/helper/sdkHelper.js", "src/entry/popup.js", "src/entry/content.js", "src/entry/injected.js"],
+, "src/entry/background.js", "src/entry/popup.js", "src/entry/content.js", "src/entry/injected.js"],
     "exclude": [
         "node_modules"
     ]

@@ -9,8 +9,8 @@
       <div v-if="flag === 'new'">
         <p>Account name:</p>
         <a-input v-model:value="account.name" />
-        <p style="margin-top: 20px;">Account password:</p>
-        <a-input v-model:value="account.password" />
+        <p v-if="isFirst" style="margin-top: 20px;">Password:</p>
+        <a-input v-if="isFirst" v-model:value="account.password" />
         <a-button type="primary" @click="newWallet" style="margin-top: 20px;">Regiest</a-button>
       </div>
       <div v-if="flag === 'existing'">
@@ -18,6 +18,8 @@
         <a-input style="margin-top:20px" v-model:value="impAccount.mnemonic" />
         <p style="margin-top: 20px;">Account Name</p>
         <a-input style="margin-top:20px" v-model:value="impAccount.name" />
+        <p v-if="isFirst" style="margin-top: 20px;">Password</p>
+        <a-input v-if="isFirst" v-model:value="impAccount.password" style="margin-top:20px" />
         <a-button style="margin-top:20px" type="primary" @click="importWallet">Import</a-button>
       </div>
       <a-button type="link" @click="() => { step = 'first'}">Back</a-button>
@@ -34,50 +36,52 @@
 </template>
 <script lang="ts" setup>
 import { onMounted, reactive, ref } from "vue";
-import { keyAddFunc, keyRecoverFunc } from "../../helper/sdkHelper"
+import { keyAddFunc, keyRecoverFunc, keyMnemonicEncrypt } from "../../helper/sdkHelper"
 import { aesEncrypt, aesDecrypt } from "../../helper/aes"
 import { saveValue, getValue } from "../../helper/storageService"
-import { storeToRefs } from 'pinia'
-import { useWalletStore } from '../../store'
-const store = useWalletStore();
-let { password, encryptedPassword }  = storeToRefs(store);
 // 判断是第一步还是第二步
 const step = ref<string>("first");
 const flag = ref<string>("new");
+const storageKeysStore = ref<string>("")
 // 判断是否是第一次注册账号，第一次注册账号有密码
+const isFirst = ref<boolean>(false)
 const account = reactive<{
   mnemonic: string;
   name: string;
   password: string;
-  isFirst: boolean;
 }>({
   mnemonic: "",
-  name: "name",
-  password: "p",
-  isFirst: false,
+  name: "add account",
+  password: ""
 });
 const impAccount = reactive<{
   mnemonic: string;
   name: string;
+  password: string;
 }>({
-  mnemonic: "amount win cost image manage series sphere buffalo inject jacket final rug shell profit among physical monitor settle hotel file world wagon law used",
-  name: "import account",
+  mnemonic: "decrease unfair barely brick brief tennis concert prison next armor steel regular ill van proud present defense visual random pond unlock struggle naive stick",
+  name: "imported account",
+  password: ''
 });
 
 onMounted(() => {
   //读取chrome.storage中的当前账户信息
-  // curAccountFunc()
+  accountFunc()
 });
+
+const accountFunc = async () => {
+  // 判断当前有没有账号，没有账号的话，需要输入密码，有账号的话，不用
+  const { keysStore } = await getValue('keysStore') as any
+  if (!keysStore) {
+    isFirst.value = true
+  } else {
+    storageKeysStore.value = keysStore
+  }
+}
 // 生成新账号
 const newAccount = async () => {
   step.value = "second";
   flag.value = "new"
-  const { curKey } = await getValue('curKey') as any
-  if (!curKey) {
-    account.isFirst = true
-  } else {
-    account.isFirst = false
-  }
 };
 
 // 导入账号
@@ -88,53 +92,60 @@ const importAccount = () => {
 
 // 生成钱包
 const newWallet = async () => {
-  // 用户名和密码存到chrome.storage.local
-  // 如果是第一次注册，需要输入密码
-  if (account.name && account.password) {
-    const result = keyAddFunc(account.name, account.password)
-    account.mnemonic = result.decryptMnemonic
-    // 先把wallet信息存到本地, keplr是通过Crypto加密的，demo简单点，通过aes加上密码加密在本地
-    // 1、先加密
-    const pasEncrypt = aesEncrypt(account.password);
-        // pina中更新
-    password.value = account.password
-    encryptedPassword.value = pasEncrypt
-    // 2、本地存储name type 密码的加密结果, 多账户时，需存下全部的账号信息
-    // 这里
-    const { keysStore } = await getValue('keysStore') as any
-    if (keysStore) {
-      const temp = JSON.parse(keysStore)
-      temp.push({
-        type: 'mnemonic',
-        mnemonic: result.wallet.mnemonic,
-        name: account.name,
-      })
-      const local = {
-        curKey: {
-          type: 'mnemonic',
-          mnemonic: result.wallet.mnemonic,
-          name: account.name,
-        },
-        keysStore: JSON.stringify(temp),
+  if (account.name) {
+    // 如果是第一次注册，需要输入密码
+    if (isFirst.value) {
+      if (account.password) {
+        // 将密码传给background,存在内存
+        chrome.runtime.sendMessage({
+          type: 'add password',
+          data: account.password
+        })
+        // 1、先加密
+        const pasEncrypt = aesEncrypt(account.password);
+        const result = keyAddFunc(account.name, account.password)
+        account.mnemonic = result.decryptMnemonic
+        const local = {
+          curKey: {
+            type: 'mnemonic',
+            mnemonic: result.wallet.mnemonic,
+            name: account.name,
+          },
+          keysStore: JSON.stringify([{
+            type: 'mnemonic',
+            mnemonic: result.wallet.mnemonic,
+            name: account.name,
+          }]),
+          // mac是加密的密码
+          status: 'unlock',
+          mac: pasEncrypt,
+        }
+        saveValue(local);
       }
-      saveValue(local);
     } else {
-      const local = {
-        curKey: {
+      // 如果不是第一次注册，密码从background得到
+      chrome.runtime.sendMessage({
+        type: 'get password'
+      }, res => {
+        const password = res
+        const result = keyAddFunc(account.name, password)
+        const temp = JSON.parse(storageKeysStore.value)
+        account.mnemonic = result.wallet.mnemonic
+        temp.push({
           type: 'mnemonic',
           mnemonic: result.wallet.mnemonic,
           name: account.name,
-        },
-        keysStore: JSON.stringify([{
-          type: 'mnemonic',
-          mnemonic: result.wallet.mnemonic,
-          name: account.name,
-        }]),
-        // mac是加密的密码
-        status: 'unlock',
-        mac: pasEncrypt,
-      }
-      saveValue(local);
+        })
+        const local = {
+          curKey: {
+            type: 'mnemonic',
+            mnemonic: result.wallet.mnemonic,
+            name: account.name,
+          },
+          keysStore: JSON.stringify(temp),
+        }
+        saveValue(local);
+      })
     }
   }
   step.value = "third-new";
@@ -142,30 +153,59 @@ const newWallet = async () => {
 
 // 导入钱包
 const importWallet = async () => {
-  console.log('=======password', password)
   if (impAccount.mnemonic && impAccount.name) {
-    const { keysStore } = await getValue('keysStore') as any
-    // 页面刷新之后，pina中的数据不存在
-    const m = keyRecoverFunc(impAccount.name, 'p' , impAccount.mnemonic)
-    if (keysStore) {
-      const temp = JSON.parse(keysStore)
-      temp.push({
-        type: 'mnemonic',
-        mnemonic: m.mnemonic,
-        name: impAccount.name,
-      })
-      const local = {
-        // curKey: {
-        //   type: 'mnemonic',
-        //   mnemonic: m,
-        //   name: impAccount.name,
-        // },
-        keysStore: JSON.stringify(temp),
+    // 如果是第一次注册，需要输入密码
+    if (isFirst.value) {
+      if (impAccount.password) {
+        // 将密码传给background,存在内存
+        chrome.runtime.sendMessage({
+          type: 'add password',
+          data: impAccount.password
+        })
+        const pasEncrypt = aesEncrypt(impAccount.password);
+        const result = keyMnemonicEncrypt(impAccount.mnemonic, impAccount.password)
+        const local = {
+          curKey: {
+            type: 'mnemonic',
+            mnemonic: result,
+            name: impAccount.name,
+          },
+          keysStore: JSON.stringify([{
+            type: 'mnemonic',
+            mnemonic: result,
+            name: impAccount.name,
+          }]),
+          // mac是加密的密码
+          status: 'unlock',
+          mac: pasEncrypt,
+        }
+        saveValue(local);
       }
-      saveValue(local);
+    } else {
+      // 如果不是第一次注册，密码从background得到
+      chrome.runtime.sendMessage({
+        type: 'get password'
+      }, res => {
+        const password = res
+        const result = keyMnemonicEncrypt(impAccount.mnemonic, password)
+        const temp = JSON.parse(storageKeysStore.value)
+        temp.push({
+          type: 'mnemonic',
+          mnemonic: result,
+          name: impAccount.name,
+        })
+        const local = {
+          curKey: {
+            type: 'mnemonic',
+            mnemonic: result,
+            name: impAccount.name,
+          },
+          keysStore: JSON.stringify(temp),
+        }
+        saveValue(local);
+      })
     }
     step.value = 'third-existing'
-    console.log(JSON.parse(keysStore))
   }
 }
 </script>

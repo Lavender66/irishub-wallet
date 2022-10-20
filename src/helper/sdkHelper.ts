@@ -54,6 +54,11 @@ export const keyMnemonicFunc = (mnemonic: string, password: string) => {
 	return client.config.keyDAO.decrypt(mnemonic, password)
 }
 
+// 助记词加密
+export const keyMnemonicEncrypt = (mnemonic: string, password: string) => {
+	return client.config.keyDAO.encrypt(mnemonic, password)
+}
+
 // 恢复
 export const keyRecoverFunc = (name: string, password: string, mnemonic: string) => {
 	return client.keys.recover(name, password, mnemonic)
@@ -86,60 +91,10 @@ export async function queryMainToken() {
 	return {};
 }
 
-// 查询链上所有的token以及详细信息
-// export async function queryAllTokens() {
-// 	return await client.token.queryTokens();
-// }
 
-// // 查询地址某个denom的余额
+// 查询地址某个denom的余额
 export async function queryBankBalance(address: string, denom: string) {
 	return await client.bank.queryBalance(address, denom);
 }
 
-// // 查询地址所有的余额
-// export async function queryBankAllBalances(address: string) {
-// 	return await client.bank.queryAllBalances(address);
-// }
-
-
-/*********   tx  **********/
-export async function sendTxOnline(to: string, amount1: string) {
-	// console.log('=====types', types.Wallet, client)
-	const baseTx = {
-		from: 'name',
-		password: 'p',
-		mode: 2,
-		account_number: 2,
-		sequence: 40,
-		chainId: client.config.chainId
-	}
-	const amount: types.Coin[] = [
-		{
-			denom: 'unyan',
-			amount: amount1,
-		},
-	];
-	const msgs: any[] = [
-		{
-			type: types.TxType.MsgSend,
-			value: {
-				from_address: 'iaa1g2tq9kacgj2tljrgku8mampz7c3l9xy6pxv6cc',
-				to_address: to,
-				amount
-			}
-		}
-	];
-	// watch wallet
-	const unsignedStdTx = client.tx.buildTx(msgs, baseTx);
-	const unsignedTxStr = Buffer.from(unsignedStdTx.getData()).toString('base64');
-	// cold wallet
-	const recover_unsigned_std_tx = client.tx.newStdTxFromTxData(unsignedTxStr);
-	const recover_signed_std_tx = await client.tx.sign(recover_unsigned_std_tx, baseTx, true);
-	const recover_signed_std_tx_str = Buffer.from(recover_signed_std_tx.getData()).toString('base64');
-	// watch wallet
-	const signed_std_tx = client.tx.newStdTxFromTxData(recover_signed_std_tx_str);
-	return await client.tx.broadcast(signed_std_tx, baseTx.mode);
-}
-
 export const client = BaseClient.getClient();
-export const sdkType = types

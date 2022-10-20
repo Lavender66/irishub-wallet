@@ -23,6 +23,7 @@ NProgress.configure({
 // 路由守卫： 如果当前账户锁定，那么进入锁定页面，解锁完再跳入之前页面
 router.beforeEach(async (to: any, from: any, next: any) => {
     NProgress.start();
+    // 得到当前账户的状态
     const { status } = await getValue('status') as any
     console.log(status)
     if (to.path === '/') {
