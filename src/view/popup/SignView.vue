@@ -78,6 +78,7 @@ const sendTxApprove = async () => {
         chainId: client.config.chainId
       }
     let recover_unsigned_std_tx = client.tx.newStdTxFromTxData(signRequest.unsigntx);
+    // 如果修改了请求的签名序列
     console.log('=======curKey', curKey, tempWallet, recover_unsigned_std_tx,signRequest.basetx)
     if (route.query.other === 'true') {
       const signed_std_tx = await client.tx.sign(recover_unsigned_std_tx, baseTx);

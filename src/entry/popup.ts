@@ -26,6 +26,7 @@ router.beforeEach(async (to: any, from: any, next: any) => {
     // 得到当前账户的状态
     const { status } = await getValue('status') as any
     console.log(status)
+    // todo
     if (to.path === '/') {
         next()
     } else {
