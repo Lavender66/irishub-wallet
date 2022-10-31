@@ -32,10 +32,8 @@
     "include": [
         "src/**/*.ts",
         "src/**/*.tsx",
-        "src/**/*.vue",
-        "tests/**/*.ts",
-        "tests/**/*.tsx"
-, "src/entry/background.js", "src/entry/popup.js", "src/entry/content.js", "src/entry/injected.js"],
+        "src/**/*.vue"
+    ],
     "exclude": [
         "node_modules"
     ]

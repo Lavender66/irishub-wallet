@@ -19,9 +19,7 @@ chromeName.forEach((name) => {
   const fileExtension = getFileExtension(name);
   const fileName = name.replace("." + fileExtension, "");
   pages[fileName] = {
-    entry: `src/entry/${name}`,
-    template: "src/view/index.html",
-    filename: `${fileName}.html`,
+    entry: `src/entry/${name}`
   };
 });
 
@@ -35,19 +33,8 @@ module.exports = {
       {
         patterns: [
           {
-            from: path.resolve("src/background.js"),
-            to: `${path.resolve("dist")}/background.js`,
-          },
-          {
-            from: path.resolve("src/content.js"),
-            to: `${path.resolve("dist")}/content.js`,
-          },
-          {
-            from: path.resolve("src/injected.js"),
-            to: `${path.resolve("dist")}/injected.js`,
-          },
-          {
-            from: path.resolve(`src/manifest.${process.env.NODE_ENV}.json`),
+            // from: path.resolve(`src/manifest.${process.env.NODE_ENV}.json`),
+            from: path.resolve(`src/manifest.json`),
             to: `${path.resolve("dist")}/manifest.json`,
           },
           {
@@ -59,10 +46,26 @@ module.exports = {
     ]);
   },
   configureWebpack: {
-    // output: {
-    //   filename: `[name].js`,
-    //   chunkFilename: `[name].js`,
-    // },
+    // 解决background与content打包的问题
+    entry: {
+      background: "./src/script/background.ts",
+      content: "./src/script/content.ts",
+      injected: "./src/script/injected.ts"
+    },
+    output: {
+      filename: `[name].js`,
+      chunkFilename: `[name].js`,
+    },
+    resolve: {
+      //配置路径别名
+      alias: {
+        'assets': '@/assets',
+        'constant': '@/constant',
+        'helper': '@/helper',
+        'views': '@/views',
+        'util': '@/util',
+      }
+    },
     devtool: isDevMode ? 'inline-source-map' : false,
     plugins: [new NodePolyfillPlugin()],
   },

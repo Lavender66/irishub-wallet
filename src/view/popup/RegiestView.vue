@@ -22,27 +22,29 @@
         <a-input v-if="isFirst" v-model:value="impAccount.password" style="margin-top:20px" />
         <a-button style="margin-top:20px" type="primary" @click="importWallet">Import</a-button>
       </div>
-      <a-button type="link" @click="() => { step = 'first'}">Back</a-button>
+      <a-button type="link" @click="() => { step = 'first' }">Back
+      </a-button>
     </div>
     <div v-if="step === 'third-new'">
       <p style="margin-top: 20px;">Mnemonic Seed</p>
       <p>{{ account.mnemonic }}</p>
-      <a-button type="primary">Success</a-button>
+      <a-button type="primary" @click="closeCurrentTab">Success</a-button>
     </div>
     <div v-if="step === 'third-existing'">
-      <a-button type="primary">Success</a-button>
+      <a-button type="primary" @click="closeCurrentTab">Success</a-button>
     </div>
   </div>
 </template>
 <script lang="ts" setup>
 import { onMounted, reactive, ref } from "vue";
-import { keyAddFunc, keyRecoverFunc, keyMnemonicEncrypt } from "../../helper/sdkHelper"
-import { aesEncrypt, aesDecrypt } from "../../helper/aes"
-import { saveValue, getValue } from "../../helper/storageService"
+import { KeyRingStatus } from "@/helper/keyring"
+import { useKeyRingStore } from "@/store/keyRing"
+import { storeToRefs } from "pinia";
+const keyRingStoreFunction = useKeyRingStore()
+const { status } = storeToRefs(keyRingStoreFunction)
 // 判断是第一步还是第二步
 const step = ref<string>("first");
 const flag = ref<string>("new");
-const storageKeysStore = ref<string>("")
 // 判断是否是第一次注册账号，第一次注册账号有密码
 const isFirst = ref<boolean>(false)
 const account = reactive<{
@@ -52,7 +54,7 @@ const account = reactive<{
 }>({
   mnemonic: "",
   name: "add account",
-  password: ""
+  password: "p"
 });
 const impAccount = reactive<{
   mnemonic: string;
@@ -61,23 +63,16 @@ const impAccount = reactive<{
 }>({
   mnemonic: "decrease unfair barely brick brief tennis concert prison next armor steel regular ill van proud present defense visual random pond unlock struggle naive stick",
   name: "imported account",
-  password: ''
+  password: 'p'
 });
 
 onMounted(() => {
-  //读取chrome.storage中的当前账户信息
-  accountFunc()
+  // 判断当前有没有账号，没有账号的话，需要输入密码，有账号的话，不用
+  if (status.value === KeyRingStatus.EMPTY) {
+    isFirst.value = true
+  }
 });
 
-const accountFunc = async () => {
-  // 判断当前有没有账号，没有账号的话，需要输入密码，有账号的话，不用
-  const { keysStore } = await getValue('keysStore') as any
-  if (!keysStore) {
-    isFirst.value = true
-  } else {
-    storageKeysStore.value = keysStore
-  }
-}
 // 生成新账号
 const newAccount = async () => {
   step.value = "second";
@@ -96,59 +91,20 @@ const newWallet = async () => {
     // 如果是第一次注册，需要输入密码
     if (isFirst.value) {
       if (account.password) {
-        // 将密码传给background,存在内存
-        chrome.runtime.sendMessage({
-          type: 'add password',
-          data: account.password
+        // 将密码和keystore 文件存到background
+        keyRingStoreFunction.addAccountPasswprd(account).then(res => {
+          step.value = "third-new";
+          account.mnemonic = res as string
         })
-        // 1、先加密
-        const pasEncrypt = aesEncrypt(account.password);
-        const result = keyAddFunc(account.name, account.password)
-        account.mnemonic = result.decryptMnemonic
-        const local = {
-          curKey: {
-            type: 'mnemonic',
-            mnemonic: result.wallet.mnemonic,
-            name: account.name,
-          },
-          keysStore: JSON.stringify([{
-            type: 'mnemonic',
-            mnemonic: result.wallet.mnemonic,
-            name: account.name,
-          }]),
-          // mac是加密的密码
-          status: 'unlock',
-          mac: pasEncrypt,
-        }
-        saveValue(local);
       }
     } else {
       // 如果不是第一次注册，密码从background得到
-      chrome.runtime.sendMessage({
-        type: 'get password'
-      }, res => {
-        const password = res
-        const result = keyAddFunc(account.name, password)
-        const temp = JSON.parse(storageKeysStore.value)
-        account.mnemonic = result.wallet.mnemonic
-        temp.push({
-          type: 'mnemonic',
-          mnemonic: result.wallet.mnemonic,
-          name: account.name,
-        })
-        const local = {
-          curKey: {
-            type: 'mnemonic',
-            mnemonic: result.wallet.mnemonic,
-            name: account.name,
-          },
-          keysStore: JSON.stringify(temp),
-        }
-        saveValue(local);
+      keyRingStoreFunction.addAccount(account).then(res => {
+        step.value = "third-new";
+        account.mnemonic = res as string
       })
     }
   }
-  step.value = "third-new";
 }
 
 // 导入钱包
@@ -158,55 +114,26 @@ const importWallet = async () => {
     if (isFirst.value) {
       if (impAccount.password) {
         // 将密码传给background,存在内存
-        chrome.runtime.sendMessage({
-          type: 'add password',
-          data: impAccount.password
+        keyRingStoreFunction.importAccountPasswprd(impAccount).then(() => {
+          step.value = 'third-existing'
         })
-        const pasEncrypt = aesEncrypt(impAccount.password);
-        const result = keyMnemonicEncrypt(impAccount.mnemonic, impAccount.password)
-        const local = {
-          curKey: {
-            type: 'mnemonic',
-            mnemonic: result,
-            name: impAccount.name,
-          },
-          keysStore: JSON.stringify([{
-            type: 'mnemonic',
-            mnemonic: result,
-            name: impAccount.name,
-          }]),
-          // mac是加密的密码
-          status: 'unlock',
-          mac: pasEncrypt,
-        }
-        saveValue(local);
       }
     } else {
       // 如果不是第一次注册，密码从background得到
-      chrome.runtime.sendMessage({
-        type: 'get password'
-      }, res => {
-        const password = res
-        const result = keyMnemonicEncrypt(impAccount.mnemonic, password)
-        const temp = JSON.parse(storageKeysStore.value)
-        temp.push({
-          type: 'mnemonic',
-          mnemonic: result,
-          name: impAccount.name,
-        })
-        const local = {
-          curKey: {
-            type: 'mnemonic',
-            mnemonic: result,
-            name: impAccount.name,
-          },
-          keysStore: JSON.stringify(temp),
-        }
-        saveValue(local);
+      keyRingStoreFunction.importAccount(impAccount).then(() => {
+        step.value = 'third-existing'
       })
     }
-    step.value = 'third-existing'
   }
+}
+// 关闭当前tab
+const closeCurrentTab = () => {
+  chrome.tabs.query(
+    { active: true, currentWindow: true },
+    tabs => {
+      chrome.tabs.remove(tabs[0].id as number);
+    }
+  );
 }
 </script>
 

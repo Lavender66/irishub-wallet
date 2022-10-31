@@ -9,7 +9,7 @@ export function saveValue(value: any) {
   });
 }
 
-export function getValue(value: any) {
+export function getValue(value: any): any {
   return new Promise((resolve, reject) => {
     chrome.storage.local.get(value, items => {
       if (chrome.runtime.lastError) {

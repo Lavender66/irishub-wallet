@@ -4,7 +4,7 @@
     "description": "iris-hub",
     "version": "0.0.1",
     "background": {
-        "service_worker": "/background.js"
+        "service_worker": "background.js"
     },
     "action": {
         "default_popup": "popup.html"
@@ -21,7 +21,7 @@
                 "<all_urls>"
             ],
             "js": [
-                "/content.js"
+                "content.js"
             ],
             "run_at": "document_start"
         }

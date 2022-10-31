@@ -1,6 +1,6 @@
 import types from "chrome-v3-irishub/dist/src/types"
 import { CHAIN_CONFIG } from "@/constant";
-import * as iris from "chrome-v3-irishub"
+import * as iris from "chrome-v3-irishub";
 export const Consts = {
 	timeout: 10000,
 };
@@ -44,7 +44,7 @@ export const keyAddFunc = (name: string, password: string) => {
 	const decryptMnemonic = client.config.keyDAO.decrypt(wallet.mnemonic, password)
 	const walletInfo = {
 		wallet,
-		decryptMnemonic
+		decryptMnemonic,
 	}
 	return walletInfo
 }
@@ -59,10 +59,17 @@ export const keyMnemonicEncrypt = (mnemonic: string, password: string) => {
 	return client.config.keyDAO.encrypt(mnemonic, password)
 }
 
-// 恢复
+// 恢复助记词
 export const keyRecoverFunc = (name: string, password: string, mnemonic: string) => {
-	return client.keys.recover(name, password, mnemonic)
+	const wallet = client.keys.recover(name, password, mnemonic)
+	const keystore = client.keys.export(name, password, password);
+	const walletInfo = {
+		wallet,
+		keystore
+	}
+	return walletInfo
 }
+
 
 // 显示地址
 export const keysAddressFunc = (name: string) => {

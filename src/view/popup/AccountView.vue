@@ -1,19 +1,20 @@
 <template>
   <div class="account" v-if="step === 'first'">
+    <left-outlined @click="goBack" :style="{ fontSize: '25px' }" />
     <div class="user-button">
       <a-button type="primary" @click="addAccount">
         + Add Account
       </a-button>
     </div>
-    <div class="user-item" v-for="(item, index) in accountsList" :key="index">
+    <div class="user-item" v-for="(item, index) in multiKeyStoreInfo" :key="index">
       <p @click="changeAccount(item)" style="cursor:pointer">{{ item.name }}</p><span
-        v-if="item.name === account.name">Slected</span>
-      <a-dropdown @click="handleButtonClick">
+        v-if="item.selected">Slected</span>
+      <a-dropdown>
         <a class="ant-dropdown-link" @click.prevent>
           <ellipsis-outlined />
         </a>
         <template #overlay>
-          <a-menu @click="handleMenuClick">
+          <a-menu>
             <a-menu-item key="1" @click="viewMnemonic(item)">
               View Mnemonic Seed
             </a-menu-item>
@@ -30,28 +31,29 @@
   </div>
   <div class="view" v-if="step === 'second'">
     <p class="view-back">
-      <left-outlined @click="()=> {step = 'first'}" />
+      <left-outlined @click="() => { step = 'first' }" :style="{ fontSize: '25px' }" />
     </p>
-    <key-outlined :style="{fontSize: '125px'}" />
+    <key-outlined :style="{ fontSize: '125px' }" />
     <p> Please input your password to proceed</p>
     <a-input v-model:value="unLockPas" />
     <a-button type="primary" @click="confirmPasFunc" class="view-button">Confirm</a-button>
   </div>
   <div v-if="step === 'third'">
-    <left-outlined @click="()=> {step = 'second'}" />
-    <p>{{ curViewMnemonic.mnemonic}}</p>
+    <left-outlined @click="() => { step = 'second' }" />
+    <p>{{ curViewMnemonic.mnemonic }}</p>
   </div>
 </template>
 <script lang="ts" setup>
-import { reactive, ref, onMounted } from "vue";
+import { reactive, ref } from "vue";
 import { EllipsisOutlined, KeyOutlined, LeftOutlined } from '@ant-design/icons-vue';
-import type { MenuProps } from 'ant-design-vue';
-import { getValue, saveValue } from "../../../helper/storageService"
-import { aesEncrypt, aesDecrypt } from "../../../helper/aes"
-import { keyMnemonicFunc } from "../../../helper/sdkHelper"
+import { getValue, saveValue } from "../../helper/storageService"
+import { aesEncrypt, aesDecrypt } from "../../util/crypto"
+import { keyMnemonicFunc } from "../../helper/sdkHelper"
 import { useRouter } from 'vue-router'
-import { defineEmits } from 'vue'
-const emit = defineEmits(['changeHome'])
+import { useKeyRingStore } from "@/store/keyRing"
+import { storeToRefs } from "pinia";
+const keyRingStoreFunction = useKeyRingStore()
+const { multiKeyStoreInfo } = storeToRefs(keyRingStoreFunction)
 const router = useRouter()
 const step = ref<string>("first");
 const unLockPas = ref<string>('')
@@ -59,39 +61,13 @@ const unLockPas = ref<string>('')
 const accountsList = ref<any>([]);
 // 当前选择查看的账户
 const curViewMnemonic = reactive<{
-  name: string;
+  id: string;
   mnemonic: string;
-  enMnemonic: string;
 }>({
-  name: "",
+  id: "",
   mnemonic: "",
-  enMnemonic: ""
 })
-const account = reactive<{
-  name: string;
-  password: string;
-  mnemonic: string;
-}>({
-  name: "",
-  password: "",
-  mnemonic: ""
-});
 
-onMounted(() => {
-  //读取chrome.storage中的当前账户信息
-  curAccountFunc()
-});
-
-const curAccountFunc = async () => {
-
-  const { curKey } = await getValue('curKey') as any
-  account.name = curKey.name
-  const { keysStore } = await getValue('keysStore') as any
-  accountsList.value = JSON.parse(keysStore)
-  // account.mnemonic = curKey.mnemonic
-  // account.address = sdk.client.keys.show(account.name)
-  // console.log('=====homeuser', curKey, account.name, account.address)
-}
 // 添加一个账户
 const addAccount = () => {
   chrome.tabs.create({
@@ -99,24 +75,20 @@ const addAccount = () => {
   })
 }
 
-const changeAccount = (item: any) => {
-  // 更改当前账户
-  saveValue({
-    curKey: item
-  });
-  emit('changeHome', 'home')
+const goBack = () => {
+  router.push("/home")
 }
 
-const handleButtonClick = (e: Event) => {
-  // console.log('click left button', e);
-};
-const handleMenuClick: MenuProps['onClick'] = e => {
-  // console.log('click', e);
-};
+const changeAccount = (item: any) => {
+  // 更改当前账户
+  keyRingStoreFunction.changeAccount(item.id).then(() => {
+    router.push("/home")
+  })
+}
 
 const viewMnemonic = (item: any) => {
   step.value = 'second'
-  curViewMnemonic.enMnemonic = item.mnemonic
+  curViewMnemonic.id = item.id
 }
 
 const deleteAccount = (item: any) => {
@@ -143,22 +115,18 @@ const deleteAccount = (item: any) => {
 }
 
 const confirmPasFunc = async () => {
-  const { curKey } = await getValue('curKey') as any
-  const { mac } = await getValue('mac') as any
-  // aes解码出密码,
-  console.log('user', curKey)
   if (unLockPas.value) {
-    const res = aesDecrypt(mac, unLockPas.value)
-    if (res === unLockPas.value) {
-      step.value = 'third'
-      curViewMnemonic.mnemonic = keyMnemonicFunc(curViewMnemonic.enMnemonic, unLockPas.value)
-    }
+    keyRingStoreFunction.viewMnemonic(unLockPas.value, curViewMnemonic.id).then(res => {
+      curViewMnemonic.mnemonic = res as string
+    })
   }
 }
 </script>
 
 <style lang="scss">
 .account {
+  margin: 10px;
+
   .user-button {
     display: flex;
     justify-content: flex-end;
@@ -167,7 +135,7 @@ const confirmPasFunc = async () => {
 
   .user-item {
     display: flex;
-    margin: 30px 20px 0px 20px;
+    margin: 30px 10px 0px 10px;
     justify-content: space-between;
   }
 }
