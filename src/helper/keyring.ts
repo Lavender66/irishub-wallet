@@ -269,13 +269,13 @@ export class KeyRing {
       );
     }
     const keyStore = this.getKeyStore(id) as KeystoreItem
-    if(password !== this.password){
-      throw new Error(
-        "Key ring is not unlocked"
-      );
+    if (password !== this.password) {
+      return "false"
+    } else {
+      const res = decryptFromMnemonic(keyStore, password)
+      console.log('=====passkey', password, id, keyStore)
+      return res
     }
-    const res = decryptFromMnemonic(keyStore, password)
-    console.log('=====passkey', password, id, keyStore, res)
-    return res
+
   }
 }

@@ -68,7 +68,6 @@ const account = reactive<{
 onMounted(() => {
   // 读取当前钱包的状态，确定跳转什么路由
   getKeyRingStore()
-  console.log('=======homeindex', status.value, keystore.value)
 });
 
 const getKeyRingStore = () => {

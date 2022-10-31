@@ -140,7 +140,12 @@ export const useKeyRingStore = defineStore("keyRing", {
             password, id
           }
         }, (result) => {
-          resolve(result)
+          console.log("=====mn", result)
+          if(result === "false"){
+            reject()
+          } else {
+            resolve(result)
+          }
         })
       })
     }
