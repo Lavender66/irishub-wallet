@@ -8,7 +8,8 @@ import {
     IMPORT_MNEMONIC_PASSWORD,
     IMPORT_MNEMONIC,
     CHANGE_ACCOUNT,
-    VIEW_MNEMONIC
+    VIEW_MNEMONIC,
+    DELETE_ACCOUNT
 } from "@/constant/message"
 import { KeyRing } from "@/helper/keyring"
 // 初始化密钥函数，将解码之后的密码保存在内存
@@ -134,6 +135,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         case VIEW_MNEMONIC: {
             const res = keyring.viewMnemnic(msg.data.password, msg.data.id)
             sendResponse(res)
+            return true
+        }
+        case DELETE_ACCOUNT: {
+            keyring.deleteKeyRing(msg.data.password, msg.data.index).then(res => {
+                console.log('=====delAccount', res)
+                sendResponse(res)
+            })
             return true
         }
         default:

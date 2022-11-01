@@ -248,7 +248,6 @@ export class KeyRing {
     multiKeyStoreInfo: MultiKeyStoreInfoWithSelected;
     keystore: KeystoreItem;
   }> {
-    console.log('======this.status', this.status)
     if (this.status !== KeyRingStatus.UNLOCKED) {
       throw new Error(
         "Key ring is not unlocked"
@@ -273,9 +272,59 @@ export class KeyRing {
       return "false"
     } else {
       const res = decryptFromMnemonic(keyStore, password)
-      console.log('=====passkey', password, id, keyStore)
       return res
     }
+  }
 
+  public async deleteKeyRing(
+    password: string,
+    index: number,
+  ): Promise<{
+    multiKeyStoreInfo: MultiKeyStoreInfoWithSelected;
+    result: string;
+    keystore: KeystoreItem | null;
+  }> {
+    let result = ""
+    if (this.status !== KeyRingStatus.UNLOCKED) {
+      result = "Key ring is not unlocked"
+      return {
+        multiKeyStoreInfo: this.getMultiKeyStoreInfo(),
+        keystore: this.keyStore,
+        result,
+      }
+    }
+
+    if (this.password !== password) {
+      result = "password is not correct"
+      return {
+        multiKeyStoreInfo: this.getMultiKeyStoreInfo(),
+        keystore: this.keyStore,
+        result,
+      }
+    }
+
+    const keyStore = this.multiKeyStore[index];
+
+    const multiKeyStore = this.multiKeyStore
+      .slice(0, index)
+      .concat(this.multiKeyStore.slice(index + 1));
+
+    this.multiKeyStore = multiKeyStore;
+    if (this.multiKeyStore.length > 0) {
+      // 删除的是选中的账号，便顺移，将下一位的keystore置为选中
+      if (KeyRing.getKeyStoreId(keyStore) === KeyRing.getKeyStoreId(this.keyStore as KeystoreItem)) {
+        this.keyStore = this.multiKeyStore[0]
+      }
+    } else {
+      // 如果删除掉没有账号了，删除成功之后便跳到新增账号页面
+      this.keyStore = null
+    }
+
+    await this.save();
+    return {
+      multiKeyStoreInfo: this.getMultiKeyStoreInfo(),
+      keystore: this.keyStore,
+      result,
+    };
   }
 }

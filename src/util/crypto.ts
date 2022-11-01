@@ -44,10 +44,9 @@ export const encryptFromMnemonic = (name: string, password: string, mnemonic: st
   }
 
   const ciphertext = Buffer.concat([
-    cipher.update(mnemonic),
+    cipher.update(Buffer.from(mnemonic)),
     cipher.final(),
   ]);
-  console.log('======', ciphertext, ciphertext.toString('hex'))
   const bufferValue = Buffer.concat([derivedKey.slice(16, 32), ciphertext]);
   const privateKeyHex = Crypto.getPrivateKeyFromMnemonic(mnemonic)
   const prefix = client.config.bech32Prefix.AccAddr
@@ -93,15 +92,11 @@ export const decryptFromMnemonic = (
     derivedKey.slice(0, 16),
     Buffer.from(json.crypto.cipherparams.iv, 'hex')
   );
-  let mnemonic = ''
-  mnemonic += decipher.update(ciphertext)
-  mnemonic += decipher.final()
 
-  const mnemonic1 = Buffer.concat([
+  const mnemonic = Buffer.concat([
     decipher.update(ciphertext),
     decipher.final(),
-  ]);
-  console.log('======mnemonic', mnemonic1.toString("hex"))
+  ]).toString();
   return mnemonic;
 }
 

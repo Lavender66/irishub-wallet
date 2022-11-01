@@ -9,7 +9,8 @@ import {
   IMPORT_MNEMONIC_PASSWORD,
   IMPORT_MNEMONIC,
   CHANGE_ACCOUNT,
-  VIEW_MNEMONIC
+  VIEW_MNEMONIC,
+  DELETE_ACCOUNT
 } from "@/constant/message"
 export const useKeyRingStore = defineStore("keyRing", {
   state: () => {
@@ -124,7 +125,6 @@ export const useKeyRingStore = defineStore("keyRing", {
           type: CHANGE_ACCOUNT,
           data: id
         }, (result) => {
-          console.log('=======resuchangeAccount', result)
           this.multiKeyStoreInfo = result.multiKeyStoreInfo;
           this.keystore = result.keystore
           resolve("success")
@@ -140,11 +140,30 @@ export const useKeyRingStore = defineStore("keyRing", {
             password, id
           }
         }, (result) => {
-          console.log("=====mn", result)
           if(result === "false"){
             reject()
           } else {
             resolve(result)
+          }
+        })
+      })
+    },
+    // 删除账号
+    delAccount(password: string, index: number){
+      return new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({
+          type: DELETE_ACCOUNT,
+          data: {
+            password, index
+          }
+        }, (result) => {
+          console.log("------delAccount", result)
+          if(result.result){
+            reject(result.result)
+          } else {
+            this.multiKeyStoreInfo = result.multiKeyStoreInfo;
+            this.keystore = result.keystore
+            resolve("")
           }
         })
       })

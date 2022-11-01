@@ -21,7 +21,7 @@
             <!-- <a-menu-item key="2">
               Change Account Name
             </a-menu-item> -->
-            <a-menu-item key="3" @click="deleteAccount(item)">
+            <a-menu-item key="3" @click="deleteAccount(item, index)">
               Delete Account
             </a-menu-item>
           </a-menu>
@@ -29,6 +29,7 @@
       </a-dropdown>
     </div>
   </div>
+  <!-- 查看助记词密码确认框 -->
   <div class="view" v-if="step === 'second'">
     <a-spin :spinning="showLoading">
       <p class="view-back">
@@ -40,9 +41,23 @@
       <a-button type="primary" @click="confirmPasFunc" class="view-button">Confirm</a-button>
     </a-spin>
   </div>
+  <!-- 删除账号密码确认框 -->
+  <div class="view" v-if="step === 'delete'">
+    <a-spin :spinning="showLoading">
+      <p class="view-back">
+        <left-outlined @click="() => { step = 'first' }" :style="{ fontSize: '25px' }" />
+      </p>
+      <key-outlined :style="{ fontSize: '125px' }" />
+      <p>Please input your password to proceed</p>
+      <a-input v-model:value="unLockPas" />
+      <a-button type="primary" @click="confirmDelPasFunc" class="view-button">Confirm</a-button>
+    </a-spin>
+  </div>
   <div v-if="step === 'third'">
-    <left-outlined @click="() => { step = 'first' }" :style="{ fontSize: '25px' }" />
-    <p>{{ curViewMnemonic.mnemonic }}</p>
+    <p style="margin: 10px">
+      <left-outlined @click="() => { step = 'first' }" :style="{ fontSize: '25px' }" />
+    </p>
+    <p style="margin:46% 10px 0 10px;">{{ curViewMnemonic.mnemonic }}</p>
   </div>
 </template>
 <script lang="ts" setup>
@@ -71,9 +86,11 @@ const accountsList = ref<any>([]);
 const curViewMnemonic = reactive<{
   id: string;
   mnemonic: string;
+  index: number;
 }>({
   id: "",
   mnemonic: "",
+  index: 0
 });
 
 // 添加一个账户
@@ -99,33 +116,13 @@ const viewMnemonic = (item: any) => {
   curViewMnemonic.id = item.id;
 };
 
-const deleteAccount = (item: any) => {
-  console.log("ssss", accountsList, item.mnemonic);
-  const res = accountsList.value.find((cur: any, index: number) => {
-    if (cur.mnemonic === item.mnemonic) {
-      return index;
-    }
-  });
-  // todo 需增加一个密码确定的过程
-  accountsList.value.splice(res, 1);
-  if (accountsList.value.length === 0) {
-    addAccount();
-    saveValue({
-      keysStore: JSON.stringify(accountsList.value),
-      curKey: {
-        name: "",
-        mnemonic: "",
-        type: "mnemonic",
-      },
-      mac: "",
-    });
-  } else {
-    saveValue({
-      keysStore: JSON.stringify(accountsList.value),
-    });
-  }
+const deleteAccount = (item: any, index: number) => {
+  step.value = "delete"
+  curViewMnemonic.id = item.id;
+  curViewMnemonic.index = index
 };
 
+// 查看助记词密码确认
 const confirmPasFunc = async () => {
   if (unLockPas.value) {
     showLoading.value = true
@@ -135,8 +132,30 @@ const confirmPasFunc = async () => {
         curViewMnemonic.mnemonic = res as string;
         showLoading.value = false
         step.value = "third";
-      }).catch(()=> {
+      }).catch(() => {
         message.error("password is not correct")
+        showLoading.value = false
+      });
+  }
+};
+
+// 删除账号密码确认
+const confirmDelPasFunc = async () => {
+  if (unLockPas.value) {
+    showLoading.value = true
+    keyRingStoreFunction
+      .delAccount(unLockPas.value, curViewMnemonic.index)
+      .then(() => {
+        // 删除成功后跳到home页面
+        console.log('======multiKeyStoreInfo', multiKeyStoreInfo.value)
+        if (multiKeyStoreInfo.value.length === 0) {
+          addAccount()
+        } else {
+          goBack()
+        }
+        showLoading.value = false
+      }).catch((res) => {
+        message.error(res)
         showLoading.value = false
       });
   }
@@ -163,6 +182,7 @@ const confirmPasFunc = async () => {
 .view {
   margin: 100px 10px 10px 10px;
   text-align: center;
+
   .view-back {
     position: absolute;
     top: -90px;
