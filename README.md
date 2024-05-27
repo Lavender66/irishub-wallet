@@ -5,6 +5,12 @@
 支持查询并展示当前地址 token 的基本信息（denom、amount）功能；
 支持 send token 到指定 address 功能；
 暂不支持 tx 离线签名功能
+
+## chrome-v3-irishub
+此依赖的git：https://github.com/Lavender66/test-irishub-js-sdk/tree/feat-3.0.0
+yarn add 本地包
+（1）在需要被链接的包中执行，yarn link
+（2）然后在需要使用的包中执行， yarn link chrome-v3-irishub
 ## Project setup
 ```
 yarn install
