@@ -12,7 +12,6 @@ const { status } = storeToRefs(keyRingStoreFunction)
 const router = useRouter()
 router.beforeEach((to, from, next) => {
   keyRingStoreFunction.restore().then(() => {
-    console.log('=======dexindex', to.path, from.path, status.value)
     if (to.fullPath === "/home" && status.value === KeyRingStatus.LOCKED) {
       // 锁定页面，跳转到锁定路由
       next({ path: "lock"})

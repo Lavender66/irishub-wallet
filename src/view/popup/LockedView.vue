@@ -28,7 +28,6 @@ const unlockWallet = () => {
   if (password.value) {
     showLoading.value = true
     keyRingStoreFunction.unlock(password.value).then(res => {
-      console.log('======res', res)
       if (res) {
         showLoading.value = false
         router.push('/home')

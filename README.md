@@ -1,5 +1,10 @@
-# iris-wallet
-
+# irishub-wallet
+支持密码锁定/解锁功能;
+支持基本的 web-site => Chrome 插件 交互，如：唤起、关闭、相互通信等；
+支持助记词&私钥的创建/导入/导出功能;
+支持查询并展示当前地址 token 的基本信息（denom、amount）功能；
+支持 send token 到指定 address 功能；
+暂不支持 tx 离线签名功能
 ## Project setup
 ```
 yarn install
@@ -15,6 +20,9 @@ yarn serve
 yarn build
 ```
 
+### 热更新，无需每次build再导入
+yarn build-watch
+
 ### Lints and fixes files
 ```
 yarn lint
@@ -24,10 +32,11 @@ yarn lint
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
 
-### keplr账号
+### nyancat账号
+iaa1weasw2y67p9nss6mhx5hftedp4zyzg72eu3wwn:
 deer discover nose merry exhibit soda win cook taxi fix nothing useless drink harvest hunt road inner arrow zoo elegant call guilt forum measure
 
-### iris钱包账号
+iaa1g2tq9kacgj2tljrgku8mampz7c3l9xy6pxv6cc:
 decrease unfair barely brick brief tennis concert prison next armor steel regular ill van proud present defense visual random pond unlock struggle naive stick
 
 ### 查看全部的local.storage信息

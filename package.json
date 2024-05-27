@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@cosmostation/cosmosjs": "^0.9.7",
-    "@irisnet/irishub-sdk": "^3.0.0",
     "@types/chrome": "^0.0.197",
     "ant-design-vue": "^3.2.12",
     "core-js": "^3.8.3",
