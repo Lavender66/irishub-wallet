@@ -1,8 +1,8 @@
 <template>
   <div class="account">
     <div v-if="step === 'first'" class="first-step">
-      <a-button @click="newAccount">Create new account </a-button>
-      <a-button style="margin-top: 20px" @click="importAccount">Import existing account </a-button>
+      <a-button @click="newAccount">创建新钱包 </a-button>
+      <a-button style="margin-top: 20px" @click="importAccount">导入已有钱包 </a-button>
     </div>
     <div v-if="step === 'second'">
       <!-- 创建新账号 -->
@@ -14,11 +14,12 @@
         <a-button type="primary" @click="newWallet" style="margin-top: 20px;">Regiest</a-button>
       </div>
       <div v-if="flag === 'existing'">
-        <p style="margin-top: 20px;">Mnemonic Seed</p>
+        <!-- <h1 style="margin-top: 20px;">使用助记词或者私钥</h1> -->
+        <p style="margin-top: 20px;">助记词</p>
         <a-input style="margin-top:20px" v-model:value="impAccount.mnemonic" />
-        <p style="margin-top: 20px;">Account Name</p>
+        <p style="margin-top: 20px;">钱包名称</p>
         <a-input style="margin-top:20px" v-model:value="impAccount.name" />
-        <p v-if="isFirst" style="margin-top: 20px;">Password</p>
+        <p v-if="isFirst" style="margin-top: 20px;">钱包密码</p>
         <a-input v-if="isFirst" v-model:value="impAccount.password" style="margin-top:20px" />
         <a-button style="margin-top:20px" type="primary" @click="importWallet">Import</a-button>
       </div>
@@ -114,7 +115,7 @@ const importWallet = async () => {
     if (isFirst.value) {
       if (impAccount.password) {
         // 将密码传给background,存在内存
-        keyRingStoreFunction.importAccountPasswprd(impAccount).then(() => {
+        keyRingStoreFunction.createMnemonicKeyRing(impAccount).then(() => {
           step.value = 'third-existing'
         })
       }

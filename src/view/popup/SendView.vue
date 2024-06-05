@@ -18,7 +18,7 @@
 import { onMounted, ref, reactive } from "vue";
 import { LeftOutlined, SelectOutlined } from '@ant-design/icons-vue';
 import { useRouter, useRoute } from 'vue-router'
-import { getValue, saveValue } from "../../helper/storageService"
+import { getValue, saveValue } from "../../helper/storage"
 import { keyRecoverFunc, keyMnemonicFunc, queryBankBalance } from "../../helper/sdkHelper"
 import { client } from "../../helper/sdkHelper"
 import * as sdktypes from "chrome-v3-irishub/dist/src/types"
@@ -39,7 +39,7 @@ const sendTxDetail = () => {
   chrome.runtime.sendMessage({
     type: 'get password'
   }, async res => {
-    const { curKey } = await getValue('curKey') as any
+    const curKey = await getValue('curKey') as any
     const name = curKey.name
     const mnemonic = curKey.mnemonic
     const password = res

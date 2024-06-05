@@ -17,10 +17,9 @@
 import { ref, onMounted, reactive } from "vue";
 import { LeftOutlined } from '@ant-design/icons-vue';
 import { client } from "../../helper/sdkHelper"
-import types from "chrome-v3-irishub/dist/src/types"
-import { keyRecoverFunc, keyMnemonicFunc, queryBankBalance } from "../../helper/sdkHelper"
-import { getValue, saveValue } from "../../helper/storageService"
-import { useRoute, useRouter } from 'vue-router'
+import { keyRecoverFunc, keyMnemonicFunc } from "../../helper/sdkHelper"
+import { getValue } from "../../helper/storage"
+import { useRoute } from 'vue-router'
 import router from "@/routers/popup";
 const route = useRoute()
 const hash = ref<string>('')
@@ -69,7 +68,7 @@ const sendTxApprove = async () => {
     type: 'get password'
   }, async res => {
     const password = res
-    const { curKey } = await getValue('curKey') as any
+    const curKey = await getValue('curKey') as any
     const tempWallet = keyRecoverFunc(curKey.name, password, keyMnemonicFunc(curKey.mnemonic, password))
     const baseTx = {
         from: curKey.name,
@@ -114,3 +113,4 @@ const sendTxApprove = async () => {
   margin: 20px 20px 20px 20px;
 }
 </style>
+../../helper/storage

@@ -67,9 +67,8 @@ import {
   KeyOutlined,
   LeftOutlined,
 } from "@ant-design/icons-vue";
-import { getValue, saveValue } from "../../helper/storageService";
+import { getValue, saveValue } from "../../helper/storage";
 import { aesEncrypt, aesDecrypt } from "../../util/crypto";
-import { keyMnemonicFunc } from "../../helper/sdkHelper";
 import { useRouter } from "vue-router";
 import { useKeyRingStore } from "@/store/keyRing";
 import { storeToRefs } from "pinia";
@@ -194,3 +193,4 @@ const confirmDelPasFunc = async () => {
   }
 }
 </style>
+../../helper/storage

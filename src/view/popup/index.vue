@@ -11,7 +11,7 @@ const keyRingStoreFunction = useKeyRingStore()
 const { status } = storeToRefs(keyRingStoreFunction)
 const router = useRouter()
 router.beforeEach((to, from, next) => {
-  keyRingStoreFunction.restore().then(() => {
+  keyRingStoreFunction.getKeyRingStatusOnly().then(() => {
     if (to.fullPath === "/home" && status.value === KeyRingStatus.LOCKED) {
       // 锁定页面，跳转到锁定路由
       next({ path: "lock"})
@@ -20,14 +20,6 @@ router.beforeEach((to, from, next) => {
         url: "popup.html#/regiest",
       });
       window.close();
-    // } else if (to.fullPath === "/regiest" && status.value === KeyRingStatus.EMPTY){
-    //   next()
-    // } else if(to.fullPath === "/home" && status.value === KeyRingStatus.UNLOCKED){
-    //   next()
-    // }  else if (to.fullPath === "/lock" && status.value === KeyRingStatus.LOCKED) {
-      // 锁定页面，跳转到锁定路由
-    //   next()
-    // } 
     } else {
       next()
     }

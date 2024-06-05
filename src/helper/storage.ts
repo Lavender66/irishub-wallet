@@ -1,3 +1,5 @@
+
+
 export function saveValue(value: any) {
   return new Promise((resolve, reject) => {
     chrome.storage.local.set(value, () => {
@@ -15,7 +17,11 @@ export function getValue(value: any): any {
       if (chrome.runtime.lastError) {
         reject(chrome.runtime.lastError);
       }
-      resolve(items);
+      if(Object.keys(items).length==0) {
+        resolve(null);
+      } else {
+        resolve(items[value])
+      }
     });
   });
 }

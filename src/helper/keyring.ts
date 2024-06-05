@@ -1,9 +1,14 @@
 import types from "chrome-v3-irishub/dist/src/types"
-import { getValue, saveValue } from "@/helper/storageService"
+import { getValue, saveValue } from "@/helper/storage"
 import { keyAddFunc, keyRecoverFunc, keyMnemonicEncrypt } from "@/helper/sdkHelper"
 import { Crypto } from "chrome-v3-irishub"
 import { pasDecrypt, encryptFromMnemonic, decryptFromMnemonic } from "@/util/crypto"
-
+import { makeObservable } from "mobx";
+import { Vault, PlainObject, VaultService } from "./vault"
+import { Buffer } from "buffer/";
+import { Mnemonic } from "@/util/mnemonic";
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const bip39 = require("bip39");
 // 钱包的状态
 export enum KeyRingStatus {
   EMPTY,
@@ -20,6 +25,15 @@ export type MultiKeyStoreInfoWithSelectedElem = KeystoreItem & {
   selected: boolean;
 };
 export type MultiKeyStoreInfoWithSelected = MultiKeyStoreInfoWithSelectedElem[];
+
+
+export interface KeyInfo {
+  readonly id: string;
+  readonly name: string;
+  readonly type: string;
+  readonly isSelected: boolean;
+  readonly insensitive: PlainObject;
+}
 
 export class KeyRing {
   /**
@@ -61,8 +75,8 @@ export class KeyRing {
     keystore: KeystoreItem | null;
   }> {
     // 只要没有多账户信息，那么便没有添加过账户
-    const { keyMultiStore } = await getValue("keyMultiStore");
-    const { keyStore } = await getValue("keyStore");
+    const keyMultiStore= await getValue("keyMultiStore");
+    const keyStore = await getValue("keyStore");
     if (!keyMultiStore) {
       this.multiKeyStore = [];
       this.keyStore = null;
@@ -326,5 +340,108 @@ export class KeyRing {
       keystore: this.keyStore,
       result,
     };
+  }
+}
+
+export class KeyRingServive {
+  protected _selectedVaultId: string | undefined = undefined;
+  constructor(
+    protected readonly vaultService: VaultService,
+  ) {
+    makeObservable(this);
+  }
+
+  get keyRingStatus(): KeyRingStatus {
+
+    if (
+      !this.vaultService.isSignedUp ||
+      this.vaultService.getVaults("keyRing").length === 0
+    ) {
+      return KeyRingStatus.EMPTY;
+    }
+
+    return this.vaultService.isLocked ? KeyRingStatus.LOCKED : KeyRingStatus.UNLOCKED;
+  }
+
+  getKeyRingVaults(): Vault[] {
+    return this.vaultService.getVaults("keyRing");
+  }
+
+  getKeyInfos(): KeyInfo[] {
+    return this.getKeyRingVaults().map((vault) => {
+      return {
+        id: vault.id,
+        name: vault.insensitive["keyRingName"] as string,
+        type: vault.insensitive["keyRingType"] as string,
+        isSelected: this._selectedVaultId === vault.id,
+        insensitive: vault.insensitive,
+      };
+    });
+  }
+
+  async createMnemonicKeyRing(mnemonic: string, name: string, password?: string): Promise<string> {
+
+    // 如果没有密码，则说明没有注册过
+    if (!this.vaultService.isSignedUp) {
+      if (!password) {
+        throw new Error("Must provide password to sign in to vault");
+      }
+
+      await this.vaultService.signUp(password);
+    }
+
+    const vaultData = await this.createKeyRingVaultByMnemonic(mnemonic);
+
+    const id = this.vaultService.addVault(
+      "keyRing",
+      {
+        ...vaultData.insensitive,
+        keyRingName: name,
+        keyRingType: "mnemonic",
+      },
+      vaultData.sensitive
+    );
+
+    this._selectedVaultId = id;
+    return id;
+  }
+
+  createKeyRingVaultByMnemonic(
+    mnemonic: string,
+    bip44Path?: {
+      account: number;
+      change: number;
+      addressIndex: number;
+    }
+  ): Promise<{
+    insensitive: PlainObject;
+    sensitive: PlainObject;
+  }> {
+    if (!mnemonic || typeof mnemonic !== "string") {
+      throw new Error("Invalid arguments");
+    }
+
+    // Validate mnemonic.
+    // Checksome shouldn't be validated in this method.
+    // try {
+    //   bip39.mnemonicToEntropy(mnemonic);
+    // } catch (e) {
+    //   if (e?.message !== "Invalid mnemonic checksum") {
+    //     throw e;
+    //   }
+    // }
+
+    const masterSeed = Mnemonic.generateMasterSeedFromMnemonic(mnemonic);
+    const masterSeedText = Buffer.from(masterSeed).toString("hex");
+
+    return Promise.resolve({
+      insensitive: {
+        bip44Path,
+      },
+      sensitive: {
+        masterSeedText,
+        mnemonic,
+      },
+    });
   }
 }

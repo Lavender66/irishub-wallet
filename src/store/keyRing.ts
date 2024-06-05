@@ -10,7 +10,10 @@ import {
   IMPORT_MNEMONIC,
   CHANGE_ACCOUNT,
   VIEW_MNEMONIC,
-  DELETE_ACCOUNT
+  DELETE_ACCOUNT,
+  GET_KEYRING_STATUS,
+  GET_KEYRING_STATUS_ONLY,
+  NEW_MNEMONIC_KEY,
 } from "@/constant/message"
 export const useKeyRingStore = defineStore("keyRing", {
   state: () => {
@@ -18,6 +21,7 @@ export const useKeyRingStore = defineStore("keyRing", {
       status: KeyRingStatus.EMPTY,
       multiKeyStoreInfo: [],
       keystore: null,
+      keyInfos: null,
     }
   },
   getters: {
@@ -26,17 +30,31 @@ export const useKeyRingStore = defineStore("keyRing", {
     // }
   },
   actions: {
-    // 去得到background里面的钱包状态
-    restore() {
+    // 新版得到钱包当前状态
+    getKeyRingStatusOnly() {
       return new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage({ type: RESTORE_KEYRING }, result => {
+        chrome.runtime.sendMessage({ type: GET_KEYRING_STATUS_ONLY }, result => {
           this.status = result.status;
-          this.multiKeyStoreInfo = result.multiKeyStoreInfo;
-          this.keystore = result.keystore
           resolve("success")
         })
       })
     },
+    // 根据助记词创建账号
+    createMnemonicKeyRing(account: object) {
+      return new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({
+          type: NEW_MNEMONIC_KEY, 
+          data: {
+            ...account
+          }
+        }, result => {
+          this.status = result.status;
+          this.keyInfos = result.keyInfos
+          resolve("success")
+        })
+      })
+    },
+    // ===================================================================================
     // 添加账号与密码
     addAccountPasswprd(account: object) {
       // 将密码传给background,存在内存
@@ -140,7 +158,7 @@ export const useKeyRingStore = defineStore("keyRing", {
             password, id
           }
         }, (result) => {
-          if(result === "false"){
+          if (result === "false") {
             reject()
           } else {
             resolve(result)
@@ -149,7 +167,7 @@ export const useKeyRingStore = defineStore("keyRing", {
       })
     },
     // 删除账号
-    delAccount(password: string, index: number){
+    delAccount(password: string, index: number) {
       return new Promise((resolve, reject) => {
         chrome.runtime.sendMessage({
           type: DELETE_ACCOUNT,
@@ -158,7 +176,7 @@ export const useKeyRingStore = defineStore("keyRing", {
           }
         }, (result) => {
           console.log("------delAccount", result)
-          if(result.result){
+          if (result.result) {
             reject(result.result)
           } else {
             this.multiKeyStoreInfo = result.multiKeyStoreInfo;
