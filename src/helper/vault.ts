@@ -44,7 +44,6 @@ export class VaultService {
     console.log('=ssssssgetPasswordCryptoStateStatus', this._isSignedUp)
 
     const userPasswordSalt = await getValue(VAULT_STORAGE.USER_PASSWORD_SALT);
-    console.log('=sssssssssuserP', userPasswordSalt)
     if (userPasswordSalt) {
       this.userPasswordSalt = Buffer.from(userPasswordSalt, "hex");
     } else {
@@ -240,6 +239,11 @@ export class VaultService {
       id,
       insensitive,
       sensitive: this.encrypt(sensitive),
+    });
+    autorun(() => {
+      const js = toJS(this.vaultMap);
+      const obj = Object.fromEntries(js);
+      saveValue({ [VAULT_STORAGE.VAULT_MAP]: JSONUint8Array.wrap(obj) });
     });
     return id;
   }

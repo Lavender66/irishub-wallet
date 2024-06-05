@@ -39,7 +39,6 @@ vaultService.init().then(() => {
             }
             case NEW_MNEMONIC_KEY: {
                 keyringService.createMnemonicKeyRing(msg.data.mnemonic, msg.data.name, msg.data.password).then(res => {
-                    console.log('ssssssssssid', res)
                     sendResponse({
                         vaultId: res,
                         status: keyringService.keyRingStatus,

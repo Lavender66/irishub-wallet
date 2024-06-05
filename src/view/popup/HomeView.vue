@@ -43,7 +43,8 @@ import { useRouter } from 'vue-router'
 import { useKeyRingStore } from "@/store/keyRing"
 import { storeToRefs } from "pinia";
 const keyRingStoreFunction = useKeyRingStore()
-const { status, keystore } = storeToRefs(keyRingStoreFunction)
+const { selectKeyInfo } = storeToRefs(keyRingStoreFunction)
+console.log('=sssselectKeyInfo', selectKeyInfo, keyRingStoreFunction.selectKeyInfo)
 const router = useRouter()
 // 当前在的导航页
 const current = ref<string[]>(['home']);
@@ -59,8 +60,8 @@ const account = reactive<{
   amount: number,
 }>({
   password: '',
-  name: keystore.value.name,
-  address: keystore.value.address,
+  name: '',
+  address: '',
   mnemonic: "",
   amount: 0
 });

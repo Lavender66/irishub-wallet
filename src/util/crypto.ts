@@ -113,3 +113,10 @@ export const pasDecrypt = (password: string, keystore: KeystoreItem) => {
   const mac = Utils.sha3(bufferValue.toString('hex'))
   return mac === keystore.crypto.mac
 }
+
+// 根据助记词、密码 得到 address
+export const getAddressFromMnemonic = (mnemonic: string) => {
+  const privateKeyHex = Crypto.getPrivateKeyFromMnemonic(mnemonic)
+  const prefix = client.config.bech32Prefix.AccAddr
+  return Crypto.getAddressFromPrivateKey(privateKeyHex, prefix)
+}

@@ -2,7 +2,7 @@ import types from "chrome-v3-irishub/dist/src/types"
 import { getValue, saveValue } from "@/helper/storage"
 import { keyAddFunc, keyRecoverFunc, keyMnemonicEncrypt } from "@/helper/sdkHelper"
 import { Crypto } from "chrome-v3-irishub"
-import { pasDecrypt, encryptFromMnemonic, decryptFromMnemonic } from "@/util/crypto"
+import { pasDecrypt, encryptFromMnemonic, decryptFromMnemonic, getAddressFromMnemonic } from "@/util/crypto"
 import { makeObservable } from "mobx";
 import { Vault, PlainObject, VaultService } from "./vault"
 import { Buffer } from "buffer/";
@@ -372,6 +372,7 @@ export class KeyRingServive {
       return {
         id: vault.id,
         name: vault.insensitive["keyRingName"] as string,
+        address: vault.insensitive["keyRingAddress"] as string,
         type: vault.insensitive["keyRingType"] as string,
         isSelected: this._selectedVaultId === vault.id,
         insensitive: vault.insensitive,
@@ -398,6 +399,7 @@ export class KeyRingServive {
         ...vaultData.insensitive,
         keyRingName: name,
         keyRingType: "mnemonic",
+        keyRingAddress: getAddressFromMnemonic(mnemonic),
       },
       vaultData.sensitive
     );

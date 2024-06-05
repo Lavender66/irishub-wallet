@@ -1,5 +1,5 @@
 import { defineStore } from "pinia"
-import { KeyRingStatus, MultiKeyStoreInfoWithSelected } from "@/helper/keyring"
+import { KeyInfo, KeyRingStatus, MultiKeyStoreInfoWithSelected } from "@/helper/keyring"
 import {
   RESTORE_KEYRING,
   NEW_MNEMONIC_PASSWORD,
@@ -21,12 +21,15 @@ export const useKeyRingStore = defineStore("keyRing", {
       status: KeyRingStatus.EMPTY,
       multiKeyStoreInfo: [],
       keystore: null,
-      keyInfos: null,
+      keyInfos: [],
+      valutId: null,
+      selectKeyInfo: null,
     }
   },
   getters: {
-    // curStatus(): number {
-    //   return this.status
+    // selectKeyInfo:(state): KeyInfo | undefined => {
+    //   console.log(' state.keyInfos?.find((keyInfo: KeyInfo) => keyInfo.isSelected)',  state, this.keyInfos)
+    //   return state.keyInfos?.find((keyInfo: KeyInfo) => keyInfo.isSelected);
     // }
   },
   actions: {
@@ -39,7 +42,7 @@ export const useKeyRingStore = defineStore("keyRing", {
         })
       })
     },
-    // 根据助记词创建账号
+    // 根据助记词\密码创建账号
     createMnemonicKeyRing(account: object) {
       return new Promise((resolve, reject) => {
         chrome.runtime.sendMessage({
@@ -48,8 +51,11 @@ export const useKeyRingStore = defineStore("keyRing", {
             ...account
           }
         }, result => {
+          console.log('=sssssscreateMnemonicKeyRing', result)
           this.status = result.status;
-          this.keyInfos = result.keyInfos
+          this.keyInfos = result.keyInfos;
+          this.valutId = result.valutId;
+          this.selectKeyInfo = result.keyInfos?.find((keyInfo: KeyInfo) => keyInfo.isSelected)
           resolve("success")
         })
       })
