@@ -1,19 +1,15 @@
 import { defineStore } from "pinia"
-import { KeyInfo, KeyRingStatus, MultiKeyStoreInfoWithSelected } from "@/helper/keyring"
+import { KeyInfo, KeyRingStatus } from "@/helper/keyring"
 import {
-  RESTORE_KEYRING,
-  NEW_MNEMONIC_PASSWORD,
-  NEW_MNEMONIC,
   UNLOCK_KEYRING,
   LOCK_KEYRING,
-  IMPORT_MNEMONIC_PASSWORD,
-  IMPORT_MNEMONIC,
-  CHANGE_ACCOUNT,
-  VIEW_MNEMONIC,
-  DELETE_ACCOUNT,
+  SELECT_KEYRING,
+  SHOW_SENSITIVE_KEYRING_DATA,
   GET_KEYRING_STATUS,
   GET_KEYRING_STATUS_ONLY,
   NEW_MNEMONIC_KEY,
+  DELETE_KEYRING,
+  NEW_PRIVATE_KEY_KEY,
 } from "@/constant/message"
 export const useKeyRingStore = defineStore("keyRing", {
   state: () => {
@@ -23,17 +19,15 @@ export const useKeyRingStore = defineStore("keyRing", {
       keystore: null,
       keyInfos: [],
       valutId: null,
-      selectKeyInfo: null,
     }
   },
   getters: {
-    // selectKeyInfo:(state): KeyInfo | undefined => {
-    //   console.log(' state.keyInfos?.find((keyInfo: KeyInfo) => keyInfo.isSelected)',  state, this.keyInfos)
-    //   return state.keyInfos?.find((keyInfo: KeyInfo) => keyInfo.isSelected);
-    // }
+    selectKeyInfo: (state): KeyInfo | undefined => {
+      return state.keyInfos?.find((keyInfo: KeyInfo) => keyInfo.isSelected);
+    }
   },
   actions: {
-    // 新版得到钱包当前状态
+    // 得到钱包当前状态
     getKeyRingStatusOnly() {
       return new Promise((resolve, reject) => {
         chrome.runtime.sendMessage({ type: GET_KEYRING_STATUS_ONLY }, result => {
@@ -42,87 +36,55 @@ export const useKeyRingStore = defineStore("keyRing", {
         })
       })
     },
+    // 得到钱包当前状态与chrome.storage中存的账号信息
+    refreshKeyRingStatus() {
+      return new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({ type: GET_KEYRING_STATUS }, result => {
+          this.status = result.status;
+          this.keyInfos = result.keyInfos;
+          resolve("success")
+        })
+      })
+    },
     // 根据助记词\密码创建账号
     createMnemonicKeyRing(account: object) {
       return new Promise((resolve, reject) => {
         chrome.runtime.sendMessage({
-          type: NEW_MNEMONIC_KEY, 
+          type: NEW_MNEMONIC_KEY,
           data: {
             ...account
           }
         }, result => {
-          console.log('=sssssscreateMnemonicKeyRing', result)
           this.status = result.status;
           this.keyInfos = result.keyInfos;
           this.valutId = result.valutId;
-          this.selectKeyInfo = result.keyInfos?.find((keyInfo: KeyInfo) => keyInfo.isSelected)
           resolve("success")
         })
       })
     },
-    // ===================================================================================
-    // 添加账号与密码
-    addAccountPasswprd(account: object) {
-      // 将密码传给background,存在内存
+    // 根据私钥\密码创建账号
+    // TODO 此函数没有调试
+    newPrivateKeyKey(account: object) {
       return new Promise((resolve, reject) => {
         chrome.runtime.sendMessage({
-          type: NEW_MNEMONIC_PASSWORD,
+          type: NEW_PRIVATE_KEY_KEY,
           data: {
             ...account
           }
         }, result => {
           this.status = result.status;
-          this.multiKeyStoreInfo = result.multiKeyStoreInfo;
-          this.keystore = result.keystore
-          resolve(result.decryptMnemonic)
-        })
-      })
-    },
-    // 添加账号
-    addAccount(account: object) {
-      // 将密码传给background,存在内存
-      return new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage({
-          type: NEW_MNEMONIC,
-          data: {
-            ...account
-          }
-        }, result => {
-          this.multiKeyStoreInfo = result.multiKeyStoreInfo;
-          resolve(result.decryptMnemonic)
-        })
-      })
-    },
-    // 导入账号与密码
-    importAccountPasswprd(account: object) {
-      // 将密码传给background,存在内存
-      return new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage({
-          type: IMPORT_MNEMONIC_PASSWORD,
-          data: {
-            ...account
-          }
-        }, result => {
-          this.status = result.status;
-          this.multiKeyStoreInfo = result.multiKeyStoreInfo;
-          this.keystore = result.keystore
+          this.keyInfos = result.keyInfos;
+          this.valutId = result.valutId;
           resolve("success")
         })
       })
     },
-    // 导入账号
-    importAccount(account: object) {
-      // 将密码传给background,存在内存
-      return new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage({
-          type: IMPORT_MNEMONIC,
-          data: {
-            ...account
-          }
-        }, result => {
-          this.multiKeyStoreInfo = result.multiKeyStoreInfo;
-          resolve("success")
-        })
+    // 锁定
+    lock() {
+      chrome.runtime.sendMessage({
+        type: LOCK_KEYRING
+      }, result => {
+        this.status = result.status;
       })
     },
     // 解锁
@@ -131,35 +93,18 @@ export const useKeyRingStore = defineStore("keyRing", {
         chrome.runtime.sendMessage({
           type: UNLOCK_KEYRING,
           data: password
-        }, res => {
-          resolve(res)
+        }, result => {
+          this.status = result.status;
+          this.keyInfos = result.keyInfos;
+          resolve(result.status)
         })
       })
     },
-    // 锁定
-    lock() {
-      chrome.runtime.sendMessage({
-        type: LOCK_KEYRING
-      })
-    },
-    // 切换账号
-    changeAccount(id: string) {
-      return new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage({
-          type: CHANGE_ACCOUNT,
-          data: id
-        }, (result) => {
-          this.multiKeyStoreInfo = result.multiKeyStoreInfo;
-          this.keystore = result.keystore
-          resolve("success")
-        })
-      })
-    },
-    // 查看助记词
+    // 查看助记词或者私钥
     viewMnemonic(password: string, id: string) {
       return new Promise((resolve, reject) => {
         chrome.runtime.sendMessage({
-          type: VIEW_MNEMONIC,
+          type: SHOW_SENSITIVE_KEYRING_DATA,
           data: {
             password, id
           }
@@ -173,25 +118,35 @@ export const useKeyRingStore = defineStore("keyRing", {
       })
     },
     // 删除账号
-    delAccount(password: string, index: number) {
+    delAccount(password: string, id: string) {
       return new Promise((resolve, reject) => {
         chrome.runtime.sendMessage({
-          type: DELETE_ACCOUNT,
+          type: DELETE_KEYRING,
           data: {
-            password, index
+            id,
+            password,
           }
         }, (result) => {
-          console.log("------delAccount", result)
-          if (result.result) {
-            reject(result.result)
-          } else {
-            this.multiKeyStoreInfo = result.multiKeyStoreInfo;
-            this.keystore = result.keystore
-            resolve("")
-          }
+          this.status = result.status;
+          this.keyInfos = result.keyInfos;
+          resolve("success")
         })
       })
-    }
+    },
+    // 切换账号
+    changeAccount(id: string) {
+      return new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({
+          type: SELECT_KEYRING,
+          data: {id}
+        }, (result) => {
+          this.status = result.status;
+          this.keyInfos = result.keyInfos
+          resolve("success")
+        })
+      })
+    },
+
   }
 })
 // 存储密码 https://www.jianshu.com/p/c0df0a05d5b9 https://www.jianshu.com/p/ca5c104b6af2

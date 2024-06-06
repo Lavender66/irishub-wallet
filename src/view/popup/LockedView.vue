@@ -14,7 +14,8 @@ import { ref } from "vue";
 import { LockOutlined } from '@ant-design/icons-vue';
 import { useKeyRingStore } from "@/store/keyRing";
 import { message } from 'ant-design-vue';
-import { useRouter } from 'vue-router'
+import { useRouter } from 'vue-router';
+import { KeyRingStatus } from "@/helper/keyring";
 const keyRingStoreFunction = useKeyRingStore()
 const router = useRouter()
 
@@ -27,8 +28,8 @@ const unlockWallet = () => {
   // 如果background里面没有密码，调出解锁页面
   if (password.value) {
     showLoading.value = true
-    keyRingStoreFunction.unlock(password.value).then(res => {
-      if (res) {
+    keyRingStoreFunction.unlock(password.value).then(status => {
+      if (status == KeyRingStatus.UNLOCKED) {
         showLoading.value = false
         router.push('/home')
       } else {

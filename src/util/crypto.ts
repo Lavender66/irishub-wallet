@@ -2,7 +2,6 @@ import * as AES from 'crypto-js/aes';
 import * as ENC from 'crypto-js/enc-utf8';
 import * as cryp from 'crypto-browserify';
 import * as uuid from 'uuid';
-import { KeystoreItem } from "@/helper/keyring"
 import { Utils, Crypto } from 'chrome-v3-irishub/dist/src/utils';
 import { client } from '@/helper/sdkHelper';
 
@@ -71,48 +70,6 @@ export const encryptFromMnemonic = (name: string, password: string, mnemonic: st
   };
 }
 
-export const decryptFromMnemonic = (
-  json: KeystoreItem,
-  password: string
-): string => {
-
-  const kdfparams = json.crypto.kdfparams;
-
-  const derivedKey = cryp.pbkdf2Sync(
-    Buffer.from(password),
-    Buffer.from(kdfparams.salt, 'hex'),
-    kdfparams.c,
-    kdfparams.dklen,
-    'sha256'
-  );
-  const ciphertext = Buffer.from(json.crypto.ciphertext, 'hex');
-
-  const decipher = cryp.createDecipheriv(
-    json.crypto.cipher,
-    derivedKey.slice(0, 16),
-    Buffer.from(json.crypto.cipherparams.iv, 'hex')
-  );
-
-  const mnemonic = Buffer.concat([
-    decipher.update(ciphertext),
-    decipher.final(),
-  ]).toString();
-  return mnemonic;
-}
-
-export const pasDecrypt = (password: string, keystore: KeystoreItem) => {
-  const derivedKey = cryp.pbkdf2Sync(
-    Buffer.from(password),
-    Buffer.from(keystore.crypto.kdfparams.salt, "hex"),
-    keystore.crypto.kdfparams.c,
-    keystore.crypto.kdfparams.dklen,
-    'sha256'
-  );
-  const bufferValue = Buffer.concat([derivedKey.slice(16, 32), Buffer.from(keystore.crypto.ciphertext, "hex")]);
-
-  const mac = Utils.sha3(bufferValue.toString('hex'))
-  return mac === keystore.crypto.mac
-}
 
 // 根据助记词、密码 得到 address
 export const getAddressFromMnemonic = (mnemonic: string) => {

@@ -6,9 +6,9 @@
         + Add Account
       </a-button>
     </div>
-    <div class="user-item" v-for="(item, index) in multiKeyStoreInfo" :key="index">
+    <div class="user-item" v-for="(item, index) in keyInfos" :key="index">
       <p @click="changeAccount(item)" style="cursor:pointer">{{ item.name }}</p><span
-        v-if="item.selected">Slected</span>
+        v-if="item.isSelected">Slected</span>
       <a-dropdown>
         <a class="ant-dropdown-link" @click.prevent>
           <ellipsis-outlined />
@@ -74,7 +74,7 @@ import { useKeyRingStore } from "@/store/keyRing";
 import { storeToRefs } from "pinia";
 import { message } from "ant-design-vue";
 const keyRingStoreFunction = useKeyRingStore();
-const { multiKeyStoreInfo } = storeToRefs(keyRingStoreFunction);
+const { keyInfos } = storeToRefs(keyRingStoreFunction);
 const router = useRouter();
 const step = ref<string>("first");
 const unLockPas = ref<string>("");
@@ -103,6 +103,7 @@ const goBack = () => {
   router.push("/home");
 };
 
+// 切换钱包
 const changeAccount = (item: any) => {
   // 更改当前账户
   keyRingStoreFunction.changeAccount(item.id).then(() => {
@@ -143,11 +144,10 @@ const confirmDelPasFunc = async () => {
   if (unLockPas.value) {
     showLoading.value = true
     keyRingStoreFunction
-      .delAccount(unLockPas.value, curViewMnemonic.index)
+      .delAccount(unLockPas.value, curViewMnemonic.id)
       .then(() => {
         // 删除成功后跳到home页面
-        console.log('======multiKeyStoreInfo', multiKeyStoreInfo.value)
-        if (multiKeyStoreInfo.value.length === 0) {
+        if (keyInfos.value.length === 0) {
           addAccount()
         } else {
           goBack()

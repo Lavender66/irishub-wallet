@@ -1,6 +1,6 @@
 <template>
   <div class="setting">
-    <p @click="lockWallet">Sign Out</p>
+    <p @click="lockWallet">锁定钱包</p>
   </div>
 </template>
 <script lang="ts" setup>

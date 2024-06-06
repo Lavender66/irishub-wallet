@@ -20,6 +20,10 @@ import { client } from "../../helper/sdkHelper"
 import { keyRecoverFunc, keyMnemonicFunc } from "../../helper/sdkHelper"
 import { getValue } from "../../helper/storage"
 import { useRoute } from 'vue-router'
+import { useKeyRingStore } from "@/store/keyRing";
+import { storeToRefs } from "pinia";
+const keyRingStoreFunction = useKeyRingStore();
+const { selectKeyInfo } = storeToRefs(keyRingStoreFunction);
 import router from "@/routers/popup";
 const route = useRoute()
 const hash = ref<string>('')
@@ -61,24 +65,21 @@ onMounted(() => {
   }
 })
 
-// 钱包内的交易
+// 钱包内的交易 // TODO 此函数没有调试
 const sendTxApprove = async () => {
   // 如果是第三方来请求签名
-  chrome.runtime.sendMessage({
-    type: 'get password'
-  }, async res => {
-    const password = res
-    const curKey = await getValue('curKey') as any
-    const tempWallet = keyRecoverFunc(curKey.name, password, keyMnemonicFunc(curKey.mnemonic, password))
+  // chrome.runtime.sendMessage({
+  //   type: 'get password'
+  // }, async res => {
+    const password = 'p'
     const baseTx = {
-        from: curKey.name,
+        from: selectKeyInfo.value?.name,
         password,
         mode: 'cosmos.bank.v1beta1.MsgSend',
         chainId: client.config.chainId
       }
     let recover_unsigned_std_tx = client.tx.newStdTxFromTxData(signRequest.unsigntx);
     // 如果修改了请求的签名序列
-    console.log('=======curKey', curKey, tempWallet, recover_unsigned_std_tx,signRequest.basetx)
     if (route.query.other === 'true') {
       const signed_std_tx = await client.tx.sign(recover_unsigned_std_tx, baseTx);
       let recover_signed_std_tx = Buffer.from(signed_std_tx.getData()).toString('base64');
@@ -90,6 +91,7 @@ const sendTxApprove = async () => {
         }
       });
     } else {
+      console.log('=ssssssignRequest.unsigntx', signRequest.unsigntx)
       const signed_std_tx = await client.tx.sign(recover_unsigned_std_tx, baseTx);
       await client.tx.broadcast(signed_std_tx, baseTx.mode).then((res: any) => {
         hash.value = res.hash
@@ -104,7 +106,7 @@ const sendTxApprove = async () => {
         console.log('====error', error)
       })
     }
-  })
+  // })
 }
 
 </script>

@@ -48,6 +48,9 @@ decrease unfair barely brick brief tennis concert prison next armor steel regula
 ### 查看全部的local.storage信息
 chrome.storage.local.get(function(result){console.log(result)})
 
+### 清除chrome.storage信息
+chrome.storage.local.clear()
+
 ### todo
 1、密码存储的安全问题（看keplr的实现）
 2、离线签名（看keplr的实现以及太山发的demo）

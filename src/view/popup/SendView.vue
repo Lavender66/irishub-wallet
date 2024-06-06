@@ -22,6 +22,11 @@ import { getValue, saveValue } from "../../helper/storage"
 import { keyRecoverFunc, keyMnemonicFunc, queryBankBalance } from "../../helper/sdkHelper"
 import { client } from "../../helper/sdkHelper"
 import * as sdktypes from "chrome-v3-irishub/dist/src/types"
+import { useKeyRingStore } from "@/store/keyRing";
+import { storeToRefs } from "pinia";
+const keyRingStoreFunction = useKeyRingStore();
+const { selectKeyInfo } = storeToRefs(keyRingStoreFunction);
+
 const router = useRouter()
 const route = useRoute()
 
@@ -35,15 +40,16 @@ const txMsg = reactive<{
 });
 
 
+// TODO 此函数没有调试
 const sendTxDetail = () => {
-  chrome.runtime.sendMessage({
-    type: 'get password'
-  }, async res => {
-    const curKey = await getValue('curKey') as any
-    const name = curKey.name
-    const mnemonic = curKey.mnemonic
-    const password = res
-    const tempWallet = keyRecoverFunc(name, password, keyMnemonicFunc(mnemonic, password))
+  // chrome.runtime.sendMessage({
+  //   type: 'get password'
+  // }, async res => {
+    const name = selectKeyInfo.value?.name
+    const password = 'p'
+    const mnemonic = 'decrease unfair barely brick brief tennis concert prison next armor steel regular ill van proud present defense visual random pond unlock struggle naive stick'
+    keyRecoverFunc(name, password, mnemonic)
+
     const baseTx = {
       from: name,
       password
@@ -58,7 +64,7 @@ const sendTxDetail = () => {
       {
         type: sdktypes.TxType.MsgSend,
         value: {
-          from_address: tempWallet.address,
+          from_address: selectKeyInfo.value?.address,
           to_address: txMsg.toAddress,
           amount
         }
@@ -80,7 +86,7 @@ const sendTxDetail = () => {
       query: queryParam
     })
 
-  })
+  // })
 }
 
 const newWindowSendTx = () => {
