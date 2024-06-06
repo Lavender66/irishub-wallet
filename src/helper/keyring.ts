@@ -125,7 +125,7 @@ export class KeyRingServive {
     return id;
   }
 
-  // todo
+  // TODO 功能未调试
   // 根据私钥创建钱包
   async createPrivateKeyKeyRing(
     privateKey: Uint8Array,
